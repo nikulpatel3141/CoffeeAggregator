@@ -25,7 +25,7 @@ resource "google_storage_bucket" "scraper_bucket" {
   location = var.region
 }
 
-# Cloud Run service for scraper
+# Cloud Run service for scraper and API
 resource "google_cloud_run_service" "scraper" {
   name     = "coffee-scraper"
   location = var.region
@@ -39,6 +39,10 @@ resource "google_cloud_run_service" "scraper" {
           name  = "GCP_PROJECT_ID"
           value = var.project_id
         }
+
+        ports {
+          container_port = 8080
+        }
       }
     }
   }
@@ -47,6 +51,20 @@ resource "google_cloud_run_service" "scraper" {
     percent         = 100
     latest_revision = true
   }
+
+  metadata {
+    annotations = {
+      "run.googleapis.com/ingress" = "all"
+    }
+  }
+}
+
+# Allow unauthenticated access to the API endpoints
+resource "google_cloud_run_service_iam_member" "public_access" {
+  service  = google_cloud_run_service.scraper.name
+  location = google_cloud_run_service.scraper.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
 # Cloud Scheduler job to trigger scraper daily

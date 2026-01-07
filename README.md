@@ -1,10 +1,26 @@
-This is a project to track specialty coffee offerings across websites in the UK
+This is a project to track specialty coffee offerings across UK specialty roasters' websites, visualized on an interactive map.
 
-The backend infrastructure is cloud based, ideally using Google Cloud free tier, and will be mostly written in Rust. The frontend will use Next js and served as a static website.
+## Features
 
-The infrastructure should be setup using terraform, and the config should be as simple as possible.
+- **Interactive Map View**: Coffees are grouped by their origin region and displayed on an interactive world map
+- **Advanced Filtering**: Filter by roaster, region, price, tasting notes, and more
+- **UK Roasters**: Scrapes from multiple UK specialty coffee roasters including:
+  - Pact Coffee
+  - Origin Coffee
+  - Rave Coffee
+  - Square Mile Coffee
+  - Has Bean Coffee
+  - Assembly Coffee
+  - Dark Arts Coffee
+  - Round Hill Roastery
 
-The data is scraped from popular websites and stored in some database eg firebase or even GCP. This will be scheduled daily to collect and aggregate information about what coffees are available and their tasting notes, origins etc and where people can buy them.
+## Tech Stack
 
-All code backing this should be simple. I want this to be a simple quick project.
+- **Backend**: Rust-based scraper and API server running on Google Cloud Run
+- **Frontend**: Next.js static website with Leaflet for map visualization
+- **Database**: Google Firestore for storing coffee data
+- **Infrastructure**: Terraform for GCP infrastructure as code
+- **Scheduling**: Cloud Scheduler for daily automated scraping
+
+The data is scraped daily and stored in Firestore, providing up-to-date information about available coffees, tasting notes, origins, and prices.
 
