@@ -199,238 +199,251 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 async fn scrape_square_mile() -> Result<Vec<Coffee>> {
     info!("Scraping Square Mile Coffee");
     let url = "https://shop.squaremilecoffee.com/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    // Example selectors - these need to be adjusted based on actual site structure
-    let product_selector = Selector::parse(".product-item").unwrap();
-    let name_selector = Selector::parse(".product-title").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Square Mile Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Square Mile Coffee", "https://shop.squaremilecoffee.com").await
 }
 
 async fn scrape_has_bean() -> Result<Vec<Coffee>> {
     info!("Scraping Has Bean Coffee");
     let url = "https://www.hasbean.co.uk/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    let product_selector = Selector::parse(".product-item").unwrap();
-    let name_selector = Selector::parse(".product-item__title").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-    let link_selector = Selector::parse("a.product-item__link").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        let product_url = product
-            .select(&link_selector)
-            .next()
-            .and_then(|e| e.value().attr("href"))
-            .map(|href| {
-                if href.starts_with("http") {
-                    href.to_string()
-                } else {
-                    format!("https://www.hasbean.co.uk{}", href)
-                }
-            })
-            .unwrap_or_else(|| url.to_string());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Has Bean Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: product_url,
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
 }
 
 async fn scrape_assembly() -> Result<Vec<Coffee>> {
     info!("Scraping Assembly Coffee");
     let url = "https://www.assemblycoffee.co.uk/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    let product_selector = Selector::parse(".product-card").unwrap();
-    let name_selector = Selector::parse(".product-card__title").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Assembly Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Assembly Coffee", "https://www.assemblycoffee.co.uk").await
 }
 
 async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Pact Coffee");
     let url = "https://www.pactcoffee.com/coffees";
-    let body = reqwest::get(url).await?.text().await?;
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .build()?;
+
+    let body = client.get(url).send().await?.text().await?;
     let document = Html::parse_document(&body);
 
-    let product_selector = Selector::parse(".product-card, [data-testid='product-card']").unwrap();
-    let name_selector = Selector::parse("h3, .product-title, [data-testid='product-title']").unwrap();
-    let price_selector = Selector::parse(".price, [data-testid='price']").unwrap();
-    let origin_selector = Selector::parse(".origin, .product-origin").unwrap();
+    // Pact Coffee uses React, try multiple selectors
+    let product_selectors = vec![
+        ".product-card",
+        "[data-component='ProductCard']",
+        "article",
+        "div[class*='product']",
+    ];
 
     let mut coffees = Vec::new();
 
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
+    for selector_str in product_selectors {
+        if let Ok(product_selector) = Selector::parse(selector_str) {
+            for product in document.select(&product_selector) {
+                // Try multiple name selectors
+                let name = ["h3", "h2", ".product-title", ".product__title", "[class*='title']"]
+                    .iter()
+                    .find_map(|sel| {
+                        Selector::parse(sel).ok().and_then(|s| {
+                            product.select(&s).next().map(|e| {
+                                e.text().collect::<String>().trim().to_string()
+                            })
+                        })
+                    })
+                    .unwrap_or_default();
 
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
+                if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
+                    continue;
+                }
 
-        let origin = product
-            .select(&origin_selector)
-            .next()
-            .map(|e| e.text().collect::<String>().trim().to_string());
+                let price = [".price", "[class*='price']", ".money"]
+                    .iter()
+                    .find_map(|sel| {
+                        Selector::parse(sel).ok().and_then(|s| {
+                            product.select(&s).next().map(|e| {
+                                e.text().collect::<String>().trim().to_string()
+                            })
+                        })
+                    });
 
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Pact Coffee".to_string(),
-                origin,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
+                let product_url = ["a"]
+                    .iter()
+                    .find_map(|sel| {
+                        Selector::parse(sel).ok().and_then(|s| {
+                            product.select(&s).next().and_then(|e| e.value().attr("href"))
+                        })
+                    })
+                    .map(|href| {
+                        if href.starts_with("http") {
+                            href.to_string()
+                        } else {
+                            format!("https://www.pactcoffee.com{}", href)
+                        }
+                    })
+                    .unwrap_or_else(|| url.to_string());
+
+                // Extract region/origin from name (common pattern: "Ethiopia Guji")
+                let (origin, region) = extract_origin_from_name(&name);
+
+                coffees.push(Coffee {
+                    name,
+                    roaster: "Pact Coffee".to_string(),
+                    origin,
+                    region,
+                    tasting_notes: Vec::new(),
+                    price,
+                    url: product_url,
+                    in_stock: true,
+                    scraped_at: Utc::now().to_rfc3339(),
+                });
+            }
+
+            if !coffees.is_empty() {
+                break;
+            }
         }
     }
 
     Ok(coffees)
 }
 
+// Helper function to extract origin/region from product name
+fn extract_origin_from_name(name: &str) -> (Option<String>, Option<String>) {
+    let origins = vec![
+        ("Ethiopia", "Ethiopia"),
+        ("Kenya", "Kenya"),
+        ("Colombia", "Colombia"),
+        ("Brazil", "Brazil"),
+        ("Guatemala", "Guatemala"),
+        ("Rwanda", "Rwanda"),
+        ("Burundi", "Burundi"),
+        ("Peru", "Peru"),
+        ("Honduras", "Honduras"),
+        ("Costa Rica", "Costa Rica"),
+        ("El Salvador", "El Salvador"),
+        ("Nicaragua", "Nicaragua"),
+        ("Panama", "Panama"),
+        ("Mexico", "Mexico"),
+        ("Indonesia", "Indonesia"),
+        ("Yemen", "Yemen"),
+        ("Tanzania", "Tanzania"),
+        ("Uganda", "Uganda"),
+    ];
+
+    for (origin, region) in origins {
+        if name.to_lowercase().contains(&origin.to_lowercase()) {
+            return (Some(origin.to_string()), Some(region.to_string()));
+        }
+    }
+
+    (None, None)
+}
+
 async fn scrape_origin_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Origin Coffee");
     let url = "https://www.origincoffee.co.uk/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
+
+    let coffees = scrape_shopify_store(
+        url,
+        "Origin Coffee",
+        "https://www.origincoffee.co.uk",
+    )
+    .await?;
+
+    Ok(coffees)
+}
+
+// Generic Shopify scraper that works for most UK roasters
+async fn scrape_shopify_store(
+    collection_url: &str,
+    roaster_name: &str,
+    base_url: &str,
+) -> Result<Vec<Coffee>> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .build()?;
+
+    let body = client.get(collection_url).send().await?.text().await?;
     let document = Html::parse_document(&body);
 
-    let product_selector = Selector::parse(".product-item, .product-card").unwrap();
-    let name_selector = Selector::parse(".product-title, h3").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
+    // Standard Shopify selectors
+    let product_selectors = vec![
+        ".grid__item",
+        ".product-item",
+        ".product-card",
+        ".product-grid-item",
+        "div[class*='product']",
+    ];
 
     let mut coffees = Vec::new();
 
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
+    for selector_str in product_selectors {
+        if let Ok(product_selector) = Selector::parse(selector_str) {
+            for product in document.select(&product_selector) {
+                let name = [
+                    "h3",
+                    "h2",
+                    ".product-title",
+                    ".product__title",
+                    ".card__title",
+                    "a.full-unstyled-link",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
+                        })
+                    })
+                })
+                .unwrap_or_default();
 
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
+                if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
+                    continue;
+                }
 
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Origin Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
+                let price = [".price", ".price__regular", ".money", "span[class*='price']"]
+                    .iter()
+                    .find_map(|sel| {
+                        Selector::parse(sel).ok().and_then(|s| {
+                            product.select(&s).next().map(|e| {
+                                e.text().collect::<String>().trim().to_string()
+                            })
+                        })
+                    });
+
+                let product_url = ["a"]
+                    .iter()
+                    .find_map(|sel| {
+                        Selector::parse(sel).ok().and_then(|s| {
+                            product.select(&s).next().and_then(|e| e.value().attr("href"))
+                        })
+                    })
+                    .map(|href| {
+                        if href.starts_with("http") {
+                            href.to_string()
+                        } else {
+                            format!("{}{}", base_url, href)
+                        }
+                    })
+                    .unwrap_or_else(|| collection_url.to_string());
+
+                let (origin, region) = extract_origin_from_name(&name);
+
+                coffees.push(Coffee {
+                    name,
+                    roaster: roaster_name.to_string(),
+                    origin,
+                    region,
+                    tasting_notes: Vec::new(),
+                    price,
+                    url: product_url,
+                    in_stock: true,
+                    scraped_at: Utc::now().to_rfc3339(),
+                });
+            }
+
+            if !coffees.is_empty() {
+                break;
+            }
         }
     }
 
@@ -440,131 +453,17 @@ async fn scrape_origin_coffee() -> Result<Vec<Coffee>> {
 async fn scrape_rave_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Rave Coffee");
     let url = "https://ravecoffee.co.uk/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    let product_selector = Selector::parse(".product-item, .product").unwrap();
-    let name_selector = Selector::parse(".product-title, h3").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Rave Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Rave Coffee", "https://ravecoffee.co.uk").await
 }
 
 async fn scrape_dark_arts() -> Result<Vec<Coffee>> {
     info!("Scraping Dark Arts Coffee");
     let url = "https://www.darkartscoffee.co.uk/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    let product_selector = Selector::parse(".product-item").unwrap();
-    let name_selector = Selector::parse(".product-title").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Dark Arts Coffee".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Dark Arts Coffee", "https://www.darkartscoffee.co.uk").await
 }
 
 async fn scrape_round_hill() -> Result<Vec<Coffee>> {
     info!("Scraping Round Hill Roastery");
     let url = "https://www.roundhillroastery.com/collections/coffee";
-    let body = reqwest::get(url).await?.text().await?;
-    let document = Html::parse_document(&body);
-
-    let product_selector = Selector::parse(".product-item").unwrap();
-    let name_selector = Selector::parse(".product-title").unwrap();
-    let price_selector = Selector::parse(".price").unwrap();
-
-    let mut coffees = Vec::new();
-
-    for product in document.select(&product_selector) {
-        let name = product
-            .select(&name_selector)
-            .next()
-            .map(|e| e.text().collect::<String>())
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-
-        let price = product
-            .select(&price_selector)
-            .next()
-            .map(|e| e.text().collect::<String>());
-
-        if !name.is_empty() {
-            coffees.push(Coffee {
-                name,
-                roaster: "Round Hill Roastery".to_string(),
-                origin: None,
-                region: None,
-                tasting_notes: Vec::new(),
-                price,
-                url: url.to_string(),
-                in_stock: true,
-                scraped_at: Utc::now().to_rfc3339(),
-            });
-        }
-    }
-
-    Ok(coffees)
+    scrape_shopify_store(url, "Round Hill Roastery", "https://www.roundhillroastery.com").await
 }

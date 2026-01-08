@@ -1,0 +1,172 @@
+{
+  "pact_coffee": [
+    {
+      "name": "Ethiopia Guji Hambela",
+      "roaster": "Pact Coffee",
+      "origin": "Ethiopia",
+      "region": "Ethiopia",
+      "tasting_notes": ["Blueberry", "Jasmine", "Stone fruit"],
+      "price": "£9.00",
+      "url": "https://www.pactcoffee.com/coffees/ethiopia-guji-hambela",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Colombia Huila",
+      "roaster": "Pact Coffee",
+      "origin": "Colombia",
+      "region": "Colombia",
+      "tasting_notes": ["Caramel", "Hazelnut", "Milk chocolate"],
+      "price": "£8.50",
+      "url": "https://www.pactcoffee.com/coffees/colombia-huila",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Brazil Fazenda Cachoeira",
+      "roaster": "Pact Coffee",
+      "origin": "Brazil",
+      "region": "Brazil",
+      "tasting_notes": ["Nutty", "Chocolate", "Smooth"],
+      "price": "£7.50",
+      "url": "https://www.pactcoffee.com/coffees/brazil-fazenda-cachoeira",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "origin_coffee": [
+    {
+      "name": "Kenya Kiambu",
+      "roaster": "Origin Coffee",
+      "origin": "Kenya",
+      "region": "Kenya",
+      "tasting_notes": ["Blackcurrant", "Brown sugar", "Citrus"],
+      "price": "£11.50",
+      "url": "https://www.origincoffee.co.uk/products/kenya-kiambu",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Guatemala Huehuetenango",
+      "roaster": "Origin Coffee",
+      "origin": "Guatemala",
+      "region": "Guatemala",
+      "tasting_notes": ["Apple", "Almond", "Honey"],
+      "price": "£10.00",
+      "url": "https://www.origincoffee.co.uk/products/guatemala-huehuetenango",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "rave_coffee": [
+    {
+      "name": "Ethiopia Sidamo",
+      "roaster": "Rave Coffee",
+      "origin": "Ethiopia",
+      "region": "Ethiopia",
+      "tasting_notes": ["Bergamot", "Floral", "Winey"],
+      "price": "£8.95",
+      "url": "https://ravecoffee.co.uk/products/ethiopia-sidamo",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Signature Blend",
+      "roaster": "Rave Coffee",
+      "origin": "Blend",
+      "region": "South America",
+      "tasting_notes": ["Chocolate", "Caramel", "Balanced"],
+      "price": "£7.50",
+      "url": "https://ravecoffee.co.uk/products/signature-blend",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "square_mile": [
+    {
+      "name": "Red Brick Seasonal Espresso",
+      "roaster": "Square Mile Coffee",
+      "origin": "Blend",
+      "region": "Central America",
+      "tasting_notes": ["Cherry", "Almond", "Cocoa"],
+      "price": "£12.50",
+      "url": "https://shop.squaremilecoffee.com/products/red-brick",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Sweet Shop",
+      "roaster": "Square Mile Coffee",
+      "origin": "Blend",
+      "region": "South America",
+      "tasting_notes": ["Strawberry", "Vanilla", "Candied"],
+      "price": "£13.00",
+      "url": "https://shop.squaremilecoffee.com/products/sweet-shop",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "has_bean": [
+    {
+      "name": "Rwanda Ruli Mountain",
+      "roaster": "Has Bean Coffee",
+      "origin": "Rwanda",
+      "region": "Rwanda",
+      "tasting_notes": ["Red apple", "Brown sugar", "Clean"],
+      "price": "£9.50",
+      "url": "https://www.hasbean.co.uk/products/rwanda-ruli-mountain",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    },
+    {
+      "name": "Costa Rica Tarrazu",
+      "roaster": "Has Bean Coffee",
+      "origin": "Costa Rica",
+      "region": "Costa Rica",
+      "tasting_notes": ["Orange", "Honey", "Balanced"],
+      "price": "£10.50",
+      "url": "https://www.hasbean.co.uk/products/costa-rica-tarrazu",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "assembly": [
+    {
+      "name": "House Espresso",
+      "roaster": "Assembly Coffee",
+      "origin": "Blend",
+      "region": "South America",
+      "tasting_notes": ["Milk chocolate", "Hazelnut", "Smooth"],
+      "price": "£9.00",
+      "url": "https://www.assemblycoffee.co.uk/products/house-espresso",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "dark_arts": [
+    {
+      "name": "Guatemala Los Alpes",
+      "roaster": "Dark Arts Coffee",
+      "origin": "Guatemala",
+      "region": "Guatemala",
+      "tasting_notes": ["Dark chocolate", "Plum", "Full-bodied"],
+      "price": "£11.00",
+      "url": "https://www.darkartscoffee.co.uk/products/guatemala-los-alpes",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ],
+  "round_hill": [
+    {
+      "name": "Peru Cajamarca",
+      "roaster": "Round Hill Roastery",
+      "origin": "Peru",
+      "region": "Peru",
+      "tasting_notes": ["Caramel", "Orange", "Nutty"],
+      "price": "£8.00",
+      "url": "https://www.roundhillroastery.com/products/peru-cajamarca",
+      "in_stock": true,
+      "scraped_at": "2026-01-08T10:00:00Z"
+    }
+  ]
+}
