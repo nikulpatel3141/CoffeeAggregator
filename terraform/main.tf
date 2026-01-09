@@ -98,20 +98,71 @@ resource "google_cloud_run_service_iam_member" "scheduler_invoker" {
   member   = "serviceAccount:${google_service_account.scheduler.email}"
 }
 
-# Storage bucket for Next.js static site
-resource "google_storage_bucket" "frontend" {
-  name     = "${var.project_id}-coffee-frontend"
+# Cloud Run service for builder (exports Firestore to JSON and commits to GitHub)
+resource "google_cloud_run_service" "builder" {
+  name     = "coffee-builder"
   location = var.region
 
-  website {
-    main_page_suffix = "index.html"
-    not_found_page   = "404.html"
+  template {
+    spec {
+      containers {
+        image = "gcr.io/${var.project_id}/coffee-builder:latest"
+
+        env {
+          name  = "GCP_PROJECT_ID"
+          value = var.project_id
+        }
+
+        env {
+          name  = "GITHUB_TOKEN"
+          value = var.github_token
+        }
+
+        env {
+          name  = "REPO_URL"
+          value = var.repo_url
+        }
+
+        ports {
+          container_port = 8080
+        }
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+
+  metadata {
+    annotations = {
+      "run.googleapis.com/ingress" = "internal"
+    }
   }
 }
 
-# Make frontend bucket publicly readable
-resource "google_storage_bucket_iam_member" "frontend_public" {
-  bucket = google_storage_bucket.frontend.name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
+# IAM binding for scheduler to invoke builder
+resource "google_cloud_run_service_iam_member" "builder_scheduler_invoker" {
+  service  = google_cloud_run_service.builder.name
+  location = google_cloud_run_service.builder.location
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.scheduler.email}"
+}
+
+# Cloud Scheduler job to trigger builder after scraping
+resource "google_cloud_scheduler_job" "daily_build" {
+  name             = "daily-coffee-build"
+  schedule         = "0 7 * * *"  # 1 hour after scraping
+  time_zone        = "Europe/London"
+  attempt_deadline = "320s"
+
+  http_target {
+    http_method = "POST"
+    uri         = google_cloud_run_service.builder.status[0].url
+
+    oidc_token {
+      service_account_email = google_service_account.scheduler.email
+    }
+  }
 }

@@ -1,2 +1,4 @@
-project_id = "your-gcp-project-id"
-region     = "europe-west2"
+project_id    = "your-gcp-project-id"
+region        = "europe-west2"
+github_token  = "your-github-personal-access-token"
+repo_url      = "github.com/username/CoffeeTracker"

@@ -43,11 +43,8 @@ export default function Home() {
   const fetchCoffees = async () => {
     try {
       setLoading(true)
-      // Get API URL from environment or construct from window location
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-                    (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8080` : '')
-
-      const response = await fetch(`${apiUrl}/api/coffees`)
+      // Fetch from static JSON file generated at build time
+      const response = await fetch('/data/coffees.json')
 
       if (!response.ok) {
         throw new Error('Failed to fetch coffees')
@@ -58,8 +55,7 @@ export default function Home() {
       setError(null)
     } catch (err) {
       console.error('Error fetching coffees:', err)
-      setError('Failed to load coffees. The scraper might not have run yet.')
-      // Set some mock data for development
+      setError('Failed to load coffees. The data file might not be generated yet.')
       setCoffees([])
     } finally {
       setLoading(false)
