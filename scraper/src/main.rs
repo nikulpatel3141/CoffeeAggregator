@@ -1,16 +1,10 @@
 use anyhow::Result;
-use axum::{
-    extract::{Query, State},
-    http::{header, StatusCode},
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{routing::post, Router};
 use chrono::Utc;
 use firestore::FirestoreDb;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
-use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,7 +12,7 @@ struct Coffee {
     name: String,
     roaster: String,
     origin: Option<String>,
-    region: Option<String>, // Geographic region (e.g., Africa, South America)
+    region: Option<String>,
     tasting_notes: Vec<String>,
     price: Option<String>,
     url: String,
@@ -31,14 +25,6 @@ struct AppState {
     db: Arc<FirestoreDb>,
 }
 
-#[derive(Debug, Deserialize)]
-struct CoffeeFilters {
-    roaster: Option<String>,
-    region: Option<String>,
-    min_price: Option<f32>,
-    max_price: Option<f32>,
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
@@ -48,17 +34,8 @@ async fn main() -> Result<()> {
 
     let state = AppState { db };
 
-    // Configure CORS to allow requests from any origin
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
-
     let app = Router::new()
         .route("/", post(scrape_handler))
-        .route("/api/coffees", get(get_coffees))
-        .route("/api/health", get(health_check))
-        .layer(cors)
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
@@ -71,10 +48,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn health_check() -> &'static str {
-    "OK"
-}
-
 async fn scrape_handler(State(state): State<AppState>) -> &'static str {
     match run_scraper(&state.db).await {
         Ok(_) => {
@@ -84,68 +57,6 @@ async fn scrape_handler(State(state): State<AppState>) -> &'static str {
         Err(e) => {
             tracing::error!("Scraping failed: {}", e);
             "ERROR"
-        }
-    }
-}
-
-async fn get_coffees(
-    State(state): State<AppState>,
-    Query(filters): Query<CoffeeFilters>,
-) -> Result<Json<Vec<Coffee>>, StatusCode> {
-    info!("Fetching coffees from Firestore");
-
-    match state
-        .db
-        .fluent()
-        .select()
-        .from("coffees")
-        .obj()
-        .query()
-        .await
-    {
-        Ok(coffees) => {
-            let mut coffees: Vec<Coffee> = coffees;
-
-            // Apply filters
-            if let Some(roaster) = filters.roaster {
-                coffees.retain(|c| c.roaster.to_lowercase().contains(&roaster.to_lowercase()));
-            }
-
-            if let Some(region) = filters.region {
-                coffees.retain(|c| {
-                    c.region
-                        .as_ref()
-                        .map(|r| r.to_lowercase().contains(&region.to_lowercase()))
-                        .unwrap_or(false)
-                });
-            }
-
-            // Price filtering (parse prices like "£12.50")
-            if filters.min_price.is_some() || filters.max_price.is_some() {
-                coffees.retain(|c| {
-                    if let Some(price_str) = &c.price {
-                        let price = price_str
-                            .chars()
-                            .filter(|c| c.is_numeric() || *c == '.')
-                            .collect::<String>()
-                            .parse::<f32>()
-                            .ok();
-
-                        if let Some(price) = price {
-                            let above_min = filters.min_price.map(|min| price >= min).unwrap_or(true);
-                            let below_max = filters.max_price.map(|max| price <= max).unwrap_or(true);
-                            return above_min && below_max;
-                        }
-                    }
-                    false
-                });
-            }
-
-            Ok(Json(coffees))
-        }
-        Err(e) => {
-            tracing::error!("Failed to fetch coffees: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
 }
