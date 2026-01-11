@@ -1,10 +1,11 @@
 use anyhow::Result;
-use axum::{routing::post, Router};
+use axum::{extract::State, routing::post, Router};
 use chrono::Utc;
 use firestore::FirestoreDb;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
+use tokio::net::TcpListener;
 use tracing::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -38,12 +39,10 @@ async fn main() -> Result<()> {
         .route("/", post(scrape_handler))
         .with_state(state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    info!("Starting server on {}", addr);
+    let listener = TcpListener::bind("0.0.0.0:8080").await?;
+    info!("Starting server on {}", listener.local_addr()?);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
@@ -64,22 +63,22 @@ async fn scrape_handler(State(state): State<AppState>) -> &'static str {
 async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     info!("Starting coffee scraper");
 
-    // List of UK specialty coffee roasters to scrape
-    let scrapers = vec![
-        scrape_pact_coffee,
-        scrape_origin_coffee,
-        scrape_rave_coffee,
-        scrape_square_mile,
-        scrape_has_bean,
-        scrape_assembly,
-        scrape_dark_arts,
-        scrape_round_hill,
-    ];
-
     let mut all_coffees = Vec::new();
 
-    for scraper_fn in scrapers {
-        match scraper_fn().await {
+    // Run all UK specialty coffee roaster scrapers
+    let scraper_results = vec![
+        scrape_pact_coffee().await,
+        scrape_origin_coffee().await,
+        scrape_rave_coffee().await,
+        scrape_square_mile().await,
+        scrape_has_bean().await,
+        scrape_assembly().await,
+        scrape_dark_arts().await,
+        scrape_round_hill().await,
+    ];
+
+    for result in scraper_results {
+        match result {
             Ok(mut coffees) => all_coffees.append(&mut coffees),
             Err(e) => tracing::error!("Scraper failed: {}", e),
         }
@@ -99,7 +98,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
             .into("coffees")
             .document_id(&doc_id)
             .object(&coffee)
-            .execute()
+            .execute::<()>()
             .await?;
     }
 
@@ -109,21 +108,106 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
 async fn scrape_square_mile() -> Result<Vec<Coffee>> {
     info!("Scraping Square Mile Coffee");
-    let url = "https://shop.squaremilecoffee.com/collections/coffee";
-    scrape_shopify_store(url, "Square Mile Coffee", "https://shop.squaremilecoffee.com").await
+    // Square Mile blocks HTML scraping, use Shopify JSON API instead
+    let url = "https://shop.squaremilecoffee.com/collections/coffee/products.json";
+    scrape_shopify_json(url, "Square Mile Coffee", "https://shop.squaremilecoffee.com").await
+}
+
+// Generic Shopify JSON API scraper - more reliable than HTML scraping
+async fn scrape_shopify_json(
+    json_url: &str,
+    roaster_name: &str,
+    base_url: &str,
+) -> Result<Vec<Coffee>> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .build()?;
+
+    let response = client.get(json_url).send().await?;
+
+    if !response.status().is_success() {
+        anyhow::bail!("Failed to fetch {} products: HTTP {}", roaster_name, response.status());
+    }
+
+    let json: serde_json::Value = response.json().await?;
+    let mut coffees = Vec::new();
+
+    if let Some(products) = json.get("products").and_then(|p| p.as_array()) {
+        for product in products {
+            let name = product.get("title")
+                .and_then(|t| t.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            if name.is_empty() {
+                continue;
+            }
+
+            let price = product.get("variants")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
+                .and_then(|v| v.get("price"))
+                .and_then(|p| p.as_str())
+                .map(|p| format!("£{}", p));
+
+            let product_url = product.get("handle")
+                .and_then(|h| h.as_str())
+                .map(|h| {
+                    if h.starts_with("http") {
+                        h.to_string()
+                    } else {
+                        format!("{}/products/{}", base_url, h)
+                    }
+                })
+                .unwrap_or_else(|| base_url.to_string());
+
+            let (origin, region) = extract_origin_from_name(&name);
+
+            coffees.push(Coffee {
+                name,
+                roaster: roaster_name.to_string(),
+                origin,
+                region,
+                tasting_notes: Vec::new(),
+                price,
+                url: product_url,
+                in_stock: true,
+                scraped_at: Utc::now().to_rfc3339(),
+            });
+        }
+    }
+
+    Ok(coffees)
 }
 
 async fn scrape_has_bean() -> Result<Vec<Coffee>> {
     info!("Scraping Has Bean Coffee");
-    let url = "https://www.hasbean.co.uk/collections/coffee";
-    scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
+
+    // Try Shopify JSON API first
+    let json_url = "https://www.hasbean.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Has Bean Coffee", "https://www.hasbean.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.hasbean.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
+        }
+    }
 }
 
 async fn scrape_assembly() -> Result<Vec<Coffee>> {
     info!("Scraping Assembly Coffee");
-    // Assembly uses .com not .co.uk
-    let url = "https://assemblycoffee.com/collections/all";
-    scrape_shopify_store(url, "Assembly Coffee", "https://assemblycoffee.com").await
+
+    // Try Shopify JSON API first
+    let json_url = "https://assemblycoffee.com/collections/all/products.json";
+    match scrape_shopify_json(json_url, "Assembly Coffee", "https://assemblycoffee.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://assemblycoffee.com/collections/all";
+            scrape_shopify_store(url, "Assembly Coffee", "https://assemblycoffee.com").await
+        }
+    }
 }
 
 async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
@@ -137,17 +221,22 @@ async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
     let body = client.get(url).send().await?.text().await?;
     let document = Html::parse_document(&body);
 
-    // Pact Coffee uses React, try multiple selectors
+    // Pact Coffee uses React, try multiple selectors including more generic patterns
     let product_selectors = vec![
         ".product-card",
         "[data-component='ProductCard']",
         "[data-testid='product-card']",
+        "[data-testid*='product']",
         "article",
         "div[class*='ProductCard']",
+        "div[class*='product-card']",
         "div[class*='product']",
         "li[class*='product']",
         ".card-wrapper",
         "[data-product]",
+        "a[href*='/coffees/']",
+        "div[class*='Card']",
+        "div[class*='Item']",
     ];
 
     let mut coffees = Vec::new();
@@ -155,17 +244,31 @@ async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
     for selector_str in product_selectors {
         if let Ok(product_selector) = Selector::parse(selector_str) {
             for product in document.select(&product_selector) {
-                // Try multiple name selectors
-                let name = ["h3", "h2", ".product-title", ".product__title", "[class*='title']"]
-                    .iter()
-                    .find_map(|sel| {
-                        Selector::parse(sel).ok().and_then(|s| {
-                            product.select(&s).next().map(|e| {
-                                e.text().collect::<String>().trim().to_string()
-                            })
+                // Try multiple name selectors - comprehensive list for React sites
+                let name = [
+                    "h3",
+                    "h2",
+                    "h4",
+                    "h1",
+                    ".product-title",
+                    ".product__title",
+                    "[class*='title']",
+                    "[class*='Title']",
+                    "[class*='name']",
+                    "[class*='Name']",
+                    "span",
+                    "p",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
                         })
                     })
-                    .unwrap_or_default();
+                })
+                .filter(|s| !s.is_empty() && s.len() > 3) // Filter out short/empty strings
+                .unwrap_or_default();
 
                 if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
                     continue;
@@ -256,16 +359,17 @@ fn extract_origin_from_name(name: &str) -> (Option<String>, Option<String>) {
 
 async fn scrape_origin_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Origin Coffee");
-    let url = "https://www.origincoffee.co.uk/collections/coffee";
 
-    let coffees = scrape_shopify_store(
-        url,
-        "Origin Coffee",
-        "https://www.origincoffee.co.uk",
-    )
-    .await?;
-
-    Ok(coffees)
+    // Try Shopify JSON API first
+    let json_url = "https://www.origincoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Origin Coffee", "https://www.origincoffee.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.origincoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Origin Coffee", "https://www.origincoffee.co.uk").await
+        }
+    }
 }
 
 // Generic Shopify scraper that works for most UK roasters
@@ -281,17 +385,23 @@ async fn scrape_shopify_store(
     let body = client.get(collection_url).send().await?.text().await?;
     let document = Html::parse_document(&body);
 
-    // Standard Shopify and e-commerce selectors
+    // Standard Shopify and e-commerce selectors - comprehensive list
     let product_selectors = vec![
         ".grid__item",
         ".product-item",
         ".product-card",
         ".product-grid-item",
         "div[class*='ProductItem']",
+        "div[class*='product-item']",
+        "div[class*='product-card']",
         "article[class*='product']",
         "li[class*='product']",
         ".card-wrapper",
+        ".card__inner",
         "[data-product]",
+        "[data-product-id]",
+        "div[class*='grid-item']",
+        "div[class*='Card']",
     ];
 
     let mut coffees = Vec::new();
@@ -302,10 +412,15 @@ async fn scrape_shopify_store(
                 let name = [
                     "h3",
                     "h2",
+                    "h4",
                     ".product-title",
                     ".product__title",
                     ".card__title",
+                    ".card-title",
                     "a.full-unstyled-link",
+                    "[class*='title']",
+                    "[class*='Title']",
+                    "a[href*='/products/']",
                 ]
                 .iter()
                 .find_map(|sel| {
@@ -373,18 +488,45 @@ async fn scrape_shopify_store(
 
 async fn scrape_rave_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Rave Coffee");
-    let url = "https://ravecoffee.co.uk/collections/coffee";
-    scrape_shopify_store(url, "Rave Coffee", "https://ravecoffee.co.uk").await
+
+    // Try Shopify JSON API first
+    let json_url = "https://ravecoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Rave Coffee", "https://ravecoffee.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://ravecoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Rave Coffee", "https://ravecoffee.co.uk").await
+        }
+    }
 }
 
 async fn scrape_dark_arts() -> Result<Vec<Coffee>> {
     info!("Scraping Dark Arts Coffee");
-    let url = "https://www.darkartscoffee.co.uk/collections/coffee";
-    scrape_shopify_store(url, "Dark Arts Coffee", "https://www.darkartscoffee.co.uk").await
+
+    // Try Shopify JSON API first
+    let json_url = "https://www.darkartscoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Dark Arts Coffee", "https://www.darkartscoffee.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.darkartscoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Dark Arts Coffee", "https://www.darkartscoffee.co.uk").await
+        }
+    }
 }
 
 async fn scrape_round_hill() -> Result<Vec<Coffee>> {
     info!("Scraping Round Hill Roastery");
-    let url = "https://www.roundhillroastery.com/collections/coffee";
-    scrape_shopify_store(url, "Round Hill Roastery", "https://www.roundhillroastery.com").await
+
+    // Try Shopify JSON API first
+    let json_url = "https://www.roundhillroastery.com/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Round Hill Roastery", "https://www.roundhillroastery.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.roundhillroastery.com/collections/coffee";
+            scrape_shopify_store(url, "Round Hill Roastery", "https://www.roundhillroastery.com").await
+        }
+    }
 }

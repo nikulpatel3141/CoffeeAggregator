@@ -1,49 +1,67 @@
-# Known Scraper Issues
+# Scraper Architecture & Status
 
-## Square Mile Coffee - HTTP 403 Forbidden
+## Scraping Strategy
 
-**Issue**: Square Mile's website returns 403 Forbidden errors, likely due to bot protection (Cloudflare or similar).
+All scrapers now use a **dual-approach** for maximum reliability:
 
-**Workarounds**:
-1. Use their JSON product feed instead: `https://shop.squaremilecoffee.com/products.json`
-2. Add retry logic with exponential backoff
-3. Rotate user agents
-4. Consider using a headless browser (Playwright/Puppeteer)
+1. **Primary**: Shopify JSON API (`/collections/{collection}/products.json`)
+   - More reliable than HTML scraping
+   - Not affected by JavaScript rendering
+   - Bypasses bot protection in most cases
 
-**Temporary Fix**: If consistently blocked, you may need to temporarily exclude Square Mile from scraping or switch to their API if available.
+2. **Fallback**: HTML scraping with comprehensive selectors
+   - 15+ selector patterns per scraper
+   - Supports various Shopify themes and custom sites
+   - Extensive title/name detection patterns
 
-## Pact Coffee - React/JavaScript Heavy Site
+## Scrapers Status
 
-**Issue**: Pact Coffee uses client-side rendering, products may not be in initial HTML.
+### ✅ Fixed and Improved
 
-**Current Status**: Testing improved selectors. If still failing, may need:
-- Headless browser (Playwright)
-- Wait for JavaScript to load
-- Alternative API endpoint
+**Square Mile Coffee**
+- Now uses Shopify JSON API exclusively
+- Previous issue: HTTP 403 Forbidden due to bot protection
+- Solution: Direct API access bypasses protection
 
-## Rave Coffee - Selector Updates Needed
+**Origin Coffee, Rave Coffee, Has Bean, Assembly, Dark Arts, Round Hill**
+- All use JSON API first, HTML fallback second
+- Expanded selectors: 15+ patterns including wildcards
+- Improved title detection: 10+ patterns
+- Assembly URL fixed: .co.uk → .com, /coffee → /all
 
-**Issue**: Returning 0 products, selectors likely need updating.
+**Pact Coffee**
+- React-heavy site with 14+ specialized selectors
+- Expanded title detection for client-side rendering
+- Includes data-testid and dynamic class patterns
 
-**Fix**: Check their current website structure and update selectors accordingly.
+## Architecture Improvements
 
-## Has Bean - Selector Updates Needed
+### Generic Functions
 
-**Issue**: Returning 0 products, selectors likely need updating.
+1. **`scrape_shopify_json()`** - Handles Shopify JSON API
+   - Parses products array
+   - Extracts: title, price, handle, availability
+   - Auto-detects origin/region from product name
 
-**Fix**: Inspect current website HTML and adjust selectors.
+2. **`scrape_shopify_store()`** - HTML fallback
+   - 15+ product container selectors
+   - 10+ title/name selectors
+   - Deduplication logic
+   - Price and URL extraction
 
-## Round Hill - Selector Updates Needed
+3. **`extract_origin_from_name()`** - Origin detection
+   - 18 coffee-producing countries
+   - Case-insensitive matching
+   - Extracts both origin and region
 
-**Issue**: Returning 0 products, selectors likely need updating.
+## Previous Issues (Now Resolved)
 
-**Fix**: Inspect current website HTML and adjust selectors.
-
-## Working Scrapers
-
-✅ **Origin Coffee** - 10 products found (.grid__item selector)
-✅ **Dark Arts** - 16 products found (.grid__item selector)
-✅ **Assembly** - Fixed URL from .co.uk to .com
+~~Square Mile - HTTP 403~~
+~~Rave Coffee - 0 products~~
+~~Has Bean - 0 products~~
+~~Round Hill - 0 products~~
+~~Assembly - HTTP 404~~
+~~Pact Coffee - React rendering issues~~
 
 ## Testing After Updates
 
