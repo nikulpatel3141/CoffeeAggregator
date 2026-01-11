@@ -120,10 +120,24 @@ async fn scrape_shopify_json(
     base_url: &str,
 ) -> Result<Vec<Coffee>> {
     let client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
         .build()?;
 
-    let response = client.get(json_url).send().await?;
+    // Add limit parameter to get more products
+    let url_with_limit = if json_url.contains('?') {
+        format!("{}&limit=250", json_url)
+    } else {
+        format!("{}?limit=250", json_url)
+    };
+
+    let response = client
+        .get(&url_with_limit)
+        .header("Accept", "application/json")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .header("Referer", base_url)
+        .send()
+        .await?;
 
     if !response.status().is_success() {
         anyhow::bail!("Failed to fetch {} products: HTTP {}", roaster_name, response.status());
@@ -215,10 +229,18 @@ async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
     let url = "https://www.pactcoffee.com/coffees";
 
     let client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
         .build()?;
 
-    let body = client.get(url).send().await?.text().await?;
+    let response = client
+        .get(url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .send()
+        .await?;
+
+    let body = response.text().await?;
     let document = Html::parse_document(&body);
 
     // Pact Coffee uses React, try multiple selectors including more generic patterns
@@ -379,10 +401,19 @@ async fn scrape_shopify_store(
     base_url: &str,
 ) -> Result<Vec<Coffee>> {
     let client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
         .build()?;
 
-    let body = client.get(collection_url).send().await?.text().await?;
+    let response = client
+        .get(collection_url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .header("Referer", base_url)
+        .send()
+        .await?;
+
+    let body = response.text().await?;
     let document = Html::parse_document(&body);
 
     // Standard Shopify and e-commerce selectors - comprehensive list

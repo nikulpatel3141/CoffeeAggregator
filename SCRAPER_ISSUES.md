@@ -14,25 +14,44 @@ All scrapers now use a **dual-approach** for maximum reliability:
    - Supports various Shopify themes and custom sites
    - Extensive title/name detection patterns
 
-## Scrapers Status
+## Current Status: 5/8 Scrapers Working ✅
 
-### ✅ Fixed and Improved
+### ✅ Working Scrapers (234 total products)
 
-**Square Mile Coffee**
-- Now uses Shopify JSON API exclusively
-- Previous issue: HTTP 403 Forbidden due to bot protection
-- Solution: Direct API access bypasses protection
+1. **Origin Coffee** - 9 products (JSON API)
+2. **Rave Coffee** - 174 products (HTML: `div[class*='card']`)
+3. **Has Bean** - 25 products (JSON API)
+4. **Dark Arts** - 14 products (JSON API)
+5. **Round Hill** - 12 products (JSON API)
 
-**Origin Coffee, Rave Coffee, Has Bean, Assembly, Dark Arts, Round Hill**
-- All use JSON API first, HTML fallback second
-- Expanded selectors: 15+ patterns including wildcards
-- Improved title detection: 10+ patterns
-- Assembly URL fixed: .co.uk → .com, /coffee → /all
+### ⚠️ Scrapers with Issues (3)
 
-**Pact Coffee**
-- React-heavy site with 14+ specialized selectors
-- Expanded title detection for client-side rendering
-- Includes data-testid and dynamic class patterns
+**1. Square Mile Coffee - HTTP 403 Forbidden**
+- Issue: Aggressive bot protection blocks both HTML and JSON API requests
+- Attempted fixes: Enhanced headers (Chrome UA, Referer, Accept-Language), 30s timeout, limit=250
+- Status: Bot protection is too aggressive for standard HTTP client
+- Options:
+  - Residential proxy rotation
+  - Manual API key (if available)
+  - Exponential backoff retry
+  - Exclude from scraping temporarily
+
+**2. Assembly Coffee - 0 Products**
+- Issue: JSON API returns empty or connection blocked
+- URL: Fixed from `.co.uk` → `.com`, `/coffee` → `/collections/all`
+- Attempted: JSON API with headers, limit parameter
+- Status: May be experiencing similar bot protection or wrong endpoint
+- Next steps: Manual inspection of actual product API endpoint
+
+**3. Pact Coffee - 0 Products**
+- Issue: React SPA with client-side rendering - products loaded via JavaScript
+- Attempted: 14+ selectors including `data-testid`, dynamic classes, generic patterns
+- Status: Initial HTML contains no products, needs JS execution
+- Note: Not a Shopify store
+- Options:
+  - Discover their API endpoint (GraphQL/REST)
+  - Alternative data source
+  - Consider lower priority due to custom architecture
 
 ## Architecture Improvements
 
@@ -54,14 +73,22 @@ All scrapers now use a **dual-approach** for maximum reliability:
    - Case-insensitive matching
    - Extracts both origin and region
 
-## Previous Issues (Now Resolved)
+## Resolved Issues ✅
 
-~~Square Mile - HTTP 403~~
-~~Rave Coffee - 0 products~~
-~~Has Bean - 0 products~~
-~~Round Hill - 0 products~~
-~~Assembly - HTTP 404~~
-~~Pact Coffee - React rendering issues~~
+- ~~Rave Coffee - 0 products~~ → **Fixed**: 174 products via HTML (`div[class*='card']`)
+- ~~Has Bean - 0 products~~ → **Fixed**: 25 products via JSON API
+- ~~Round Hill - 0 products~~ → **Fixed**: 12 products via JSON API
+- ~~Assembly - HTTP 404~~ → **Partial**: URL fixed but still 0 products (bot protection suspected)
+- ~~Origin Coffee selectors~~ → **Optimized**: Now uses JSON API (9 products)
+- ~~Dark Arts selectors~~ → **Optimized**: Now uses JSON API (14 products)
+
+## Remaining Challenges
+
+The 3 failing scrapers (Square Mile, Assembly, Pact) represent edge cases:
+- **Bot protection** (Square Mile, possibly Assembly)
+- **Non-Shopify architecture** (Pact Coffee)
+
+With 5/8 scrapers working and 234 products, the system is functional for MVP. The remaining scrapers can be addressed with more advanced techniques or excluded if necessary.
 
 ## Testing After Updates
 
