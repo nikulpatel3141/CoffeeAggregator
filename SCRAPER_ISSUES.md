@@ -25,7 +25,7 @@ All active scrapers are working properly. The system has been streamlined to foc
 3. **Has Bean** - JSON API + HTML fallback
 4. **Dark Arts** - JSON API + HTML fallback
 5. **Round Hill** - JSON API + HTML fallback
-6. **Redber Coffee** - JSON API + HTML fallback (newly added)
+6. **Extract Coffee Roasters** - JSON API + HTML fallback
 
 ### Removed Scrapers
 

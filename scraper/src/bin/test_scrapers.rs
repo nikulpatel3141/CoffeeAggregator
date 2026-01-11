@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
         ("Has Bean", "https://www.hasbean.co.uk/collections/coffee"),
         ("Dark Arts", "https://www.darkartscoffee.co.uk/collections/coffee"),
         ("Round Hill", "https://www.roundhillroastery.com/collections/coffee"),
-        ("Redber Coffee", "https://redber.co.uk/collections/coffee"),
+        ("Extract Coffee", "https://extractcoffee.co.uk/collections/coffee"),
     ];
 
     for (name, url) in roasters {

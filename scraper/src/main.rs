@@ -72,7 +72,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_has_bean().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
-        scrape_redber().await,
+        scrape_extract().await,
     ];
 
     for result in scraper_results {
@@ -200,17 +200,17 @@ async fn scrape_has_bean() -> Result<Vec<Coffee>> {
     }
 }
 
-async fn scrape_redber() -> Result<Vec<Coffee>> {
-    info!("Scraping Redber Coffee");
+async fn scrape_extract() -> Result<Vec<Coffee>> {
+    info!("Scraping Extract Coffee Roasters");
 
     // Try Shopify JSON API first
-    let json_url = "https://redber.co.uk/collections/coffee/products.json";
-    match scrape_shopify_json(json_url, "Redber Coffee", "https://redber.co.uk").await {
+    let json_url = "https://extractcoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Extract Coffee Roasters", "https://extractcoffee.co.uk").await {
         Ok(coffees) if !coffees.is_empty() => Ok(coffees),
         _ => {
             // Fallback to HTML scraping
-            let url = "https://redber.co.uk/collections/coffee";
-            scrape_shopify_store(url, "Redber Coffee", "https://redber.co.uk").await
+            let url = "https://extractcoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Extract Coffee Roasters", "https://extractcoffee.co.uk").await
         }
     }
 }
