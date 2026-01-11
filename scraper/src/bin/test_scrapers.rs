@@ -1,5 +1,6 @@
 use anyhow::Result;
 use scraper::{Html, Selector};
+use serde_json;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -78,6 +79,24 @@ async fn test_roaster_website(url: &str) -> Result<(usize, &'static str)> {
         .timeout(std::time::Duration::from_secs(15))
         .build()?;
 
+    // First try JSON API if it's a Shopify store
+    if url.contains("/collections/") {
+        let json_url = format!("{}/products.json", url);
+        if let Ok(response) = client.get(&json_url).send().await {
+            if response.status().is_success() {
+                if let Ok(json) = response.json::<serde_json::Value>().await {
+                    if let Some(products) = json.get("products").and_then(|p| p.as_array()) {
+                        let count = products.len();
+                        if count > 0 {
+                            return Ok((count, "JSON API"));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback to HTML scraping
     let response = client.get(url).send().await?;
 
     if !response.status().is_success() {
