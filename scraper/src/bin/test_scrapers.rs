@@ -11,16 +11,14 @@ async fn main() -> Result<()> {
     let mut successful_scrapers = 0;
     let mut failed_scrapers = Vec::new();
 
-    // Test all 8 roasters
+    // Test all 6 roasters
     let roasters = vec![
-        ("Pact Coffee", "https://www.pactcoffee.com/coffees"),
         ("Origin Coffee", "https://www.origincoffee.co.uk/collections/coffee"),
         ("Rave Coffee", "https://ravecoffee.co.uk/collections/coffee"),
-        ("Square Mile", "https://shop.squaremilecoffee.com/collections/coffee"),
         ("Has Bean", "https://www.hasbean.co.uk/collections/coffee"),
-        ("Assembly", "https://assemblycoffee.com/collections/all"),
         ("Dark Arts", "https://www.darkartscoffee.co.uk/collections/coffee"),
         ("Round Hill", "https://www.roundhillroastery.com/collections/coffee"),
+        ("Redber Coffee", "https://redber.co.uk/collections/coffee"),
     ];
 
     for (name, url) in roasters {
@@ -46,7 +44,7 @@ async fn main() -> Result<()> {
 
     println!("\n═══════════════════════════════════════════════");
     println!("📊 Results Summary:");
-    println!("  ✅ Successful: {}/8 roasters", successful_scrapers);
+    println!("  ✅ Successful: {}/6 roasters", successful_scrapers);
     println!("  📦 Total products: {}", total_coffees);
     println!("  📈 Average: {:.1} products/roaster", total_coffees as f32 / successful_scrapers.max(1) as f32);
 
@@ -66,7 +64,7 @@ async fn main() -> Result<()> {
         anyhow::bail!("All scrapers failed - check network connection");
     }
 
-    if failed_scrapers.len() > 4 {
+    if failed_scrapers.len() > 3 {
         anyhow::bail!("More than half of scrapers failed");
     }
 

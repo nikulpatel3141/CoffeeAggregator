@@ -67,14 +67,12 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     // Run all UK specialty coffee roaster scrapers
     let scraper_results = vec![
-        scrape_pact_coffee().await,
         scrape_origin_coffee().await,
         scrape_rave_coffee().await,
-        scrape_square_mile().await,
         scrape_has_bean().await,
-        scrape_assembly().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
+        scrape_redber().await,
     ];
 
     for result in scraper_results {
@@ -104,118 +102,6 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     info!("Scraping completed");
     Ok(())
-}
-
-async fn scrape_square_mile() -> Result<Vec<Coffee>> {
-    info!("Scraping Square Mile Coffee");
-
-    // Square Mile has aggressive bot protection, try multiple strategies
-    let client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        .timeout(std::time::Duration::from_secs(30))
-        .build()?;
-
-    // Strategy 1: Try products.json at root level first
-    let urls_to_try = vec![
-        "https://shop.squaremilecoffee.com/products.json?limit=250",
-        "https://shop.squaremilecoffee.com/collections/coffee/products.json?limit=250",
-        "https://shop.squaremilecoffee.com/collections/all/products.json?limit=250",
-    ];
-
-    for (idx, url) in urls_to_try.iter().enumerate() {
-        // Add small delay between attempts
-        if idx > 0 {
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        }
-
-        let response = client
-            .get(*url)
-            .header("Accept", "application/json, text/javascript, */*; q=0.01")
-            .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
-            .header("Accept-Encoding", "gzip, deflate, br")
-            .header("Cache-Control", "no-cache")
-            .header("Pragma", "no-cache")
-            .header("Sec-Fetch-Dest", "empty")
-            .header("Sec-Fetch-Mode", "cors")
-            .header("Sec-Fetch-Site", "same-origin")
-            .header("Referer", "https://shop.squaremilecoffee.com/collections/coffee")
-            .header("X-Requested-With", "XMLHttpRequest")
-            .send()
-            .await;
-
-        if let Ok(resp) = response {
-            if resp.status().is_success() {
-                if let Ok(json) = resp.json::<serde_json::Value>().await {
-                    if let Some(products) = json.get("products").and_then(|p| p.as_array()) {
-                        if !products.is_empty() {
-                            info!("Square Mile: Success with URL {}", url);
-                            return parse_shopify_json_products(
-                                products,
-                                "Square Mile Coffee",
-                                "https://shop.squaremilecoffee.com",
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    anyhow::bail!("Failed to fetch Square Mile products: all strategies exhausted")
-}
-
-// Helper function to parse Shopify JSON products
-fn parse_shopify_json_products(
-    products: &[serde_json::Value],
-    roaster_name: &str,
-    base_url: &str,
-) -> Result<Vec<Coffee>> {
-    let mut coffees = Vec::new();
-
-    for product in products {
-        let name = product.get("title")
-            .and_then(|t| t.as_str())
-            .unwrap_or("")
-            .to_string();
-
-        if name.is_empty() {
-            continue;
-        }
-
-        let price = product.get("variants")
-            .and_then(|v| v.as_array())
-            .and_then(|arr| arr.first())
-            .and_then(|v| v.get("price"))
-            .and_then(|p| p.as_str())
-            .map(|p| format!("£{}", p));
-
-        let product_url = product.get("handle")
-            .and_then(|h| h.as_str())
-            .map(|h| {
-                if h.starts_with("http") {
-                    h.to_string()
-                } else {
-                    format!("{}/products/{}", base_url, h)
-                }
-            })
-            .unwrap_or_else(|| base_url.to_string());
-
-        let (origin, region) = extract_origin_from_name(&name);
-
-        coffees.push(Coffee {
-            name,
-            roaster: roaster_name.to_string(),
-            origin,
-            region,
-            tasting_notes: Vec::new(),
-            price,
-            url: product_url,
-            in_stock: true,
-            scraped_at: Utc::now().to_rfc3339(),
-        });
-    }
-
-    Ok(coffees)
 }
 
 // Generic Shopify JSON API scraper - more reliable than HTML scraping
@@ -314,142 +200,19 @@ async fn scrape_has_bean() -> Result<Vec<Coffee>> {
     }
 }
 
-async fn scrape_assembly() -> Result<Vec<Coffee>> {
-    info!("Scraping Assembly Coffee");
+async fn scrape_redber() -> Result<Vec<Coffee>> {
+    info!("Scraping Redber Coffee");
 
     // Try Shopify JSON API first
-    let json_url = "https://assemblycoffee.com/collections/all/products.json";
-    match scrape_shopify_json(json_url, "Assembly Coffee", "https://assemblycoffee.com").await {
-        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+    let json_url = "https://redber.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Redber Coffee", "https://redber.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => Ok(coffees),
         _ => {
             // Fallback to HTML scraping
-            let url = "https://assemblycoffee.com/collections/all";
-            scrape_shopify_store(url, "Assembly Coffee", "https://assemblycoffee.com").await
+            let url = "https://redber.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Redber Coffee", "https://redber.co.uk").await
         }
     }
-}
-
-async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
-    info!("Scraping Pact Coffee");
-    let url = "https://www.pactcoffee.com/coffees";
-
-    let client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        .timeout(std::time::Duration::from_secs(30))
-        .build()?;
-
-    let response = client
-        .get(url)
-        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-        .header("Accept-Language", "en-GB,en;q=0.9")
-        .send()
-        .await?;
-
-    let body = response.text().await?;
-    let document = Html::parse_document(&body);
-
-    // Pact Coffee uses React, try multiple selectors including more generic patterns
-    let product_selectors = vec![
-        ".product-card",
-        "[data-component='ProductCard']",
-        "[data-testid='product-card']",
-        "[data-testid*='product']",
-        "article",
-        "div[class*='ProductCard']",
-        "div[class*='product-card']",
-        "div[class*='product']",
-        "li[class*='product']",
-        ".card-wrapper",
-        "[data-product]",
-        "a[href*='/coffees/']",
-        "div[class*='Card']",
-        "div[class*='Item']",
-    ];
-
-    let mut coffees = Vec::new();
-
-    for selector_str in product_selectors {
-        if let Ok(product_selector) = Selector::parse(selector_str) {
-            for product in document.select(&product_selector) {
-                // Try multiple name selectors - comprehensive list for React sites
-                let name = [
-                    "h3",
-                    "h2",
-                    "h4",
-                    "h1",
-                    ".product-title",
-                    ".product__title",
-                    "[class*='title']",
-                    "[class*='Title']",
-                    "[class*='name']",
-                    "[class*='Name']",
-                    "span",
-                    "p",
-                ]
-                .iter()
-                .find_map(|sel| {
-                    Selector::parse(sel).ok().and_then(|s| {
-                        product.select(&s).next().map(|e| {
-                            e.text().collect::<String>().trim().to_string()
-                        })
-                    })
-                })
-                .filter(|s| !s.is_empty() && s.len() > 3) // Filter out short/empty strings
-                .unwrap_or_default();
-
-                if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
-                    continue;
-                }
-
-                let price = [".price", "[class*='price']", ".money"]
-                    .iter()
-                    .find_map(|sel| {
-                        Selector::parse(sel).ok().and_then(|s| {
-                            product.select(&s).next().map(|e| {
-                                e.text().collect::<String>().trim().to_string()
-                            })
-                        })
-                    });
-
-                let product_url = ["a"]
-                    .iter()
-                    .find_map(|sel| {
-                        Selector::parse(sel).ok().and_then(|s| {
-                            product.select(&s).next().and_then(|e| e.value().attr("href"))
-                        })
-                    })
-                    .map(|href| {
-                        if href.starts_with("http") {
-                            href.to_string()
-                        } else {
-                            format!("https://www.pactcoffee.com{}", href)
-                        }
-                    })
-                    .unwrap_or_else(|| url.to_string());
-
-                // Extract region/origin from name (common pattern: "Ethiopia Guji")
-                let (origin, region) = extract_origin_from_name(&name);
-
-                coffees.push(Coffee {
-                    name,
-                    roaster: "Pact Coffee".to_string(),
-                    origin,
-                    region,
-                    tasting_notes: Vec::new(),
-                    price,
-                    url: product_url,
-                    in_stock: true,
-                    scraped_at: Utc::now().to_rfc3339(),
-                });
-            }
-
-            if !coffees.is_empty() {
-                break;
-            }
-        }
-    }
-
-    Ok(coffees)
 }
 
 // Helper function to extract origin/region from product name
