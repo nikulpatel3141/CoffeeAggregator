@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
         ("Rave Coffee", "https://ravecoffee.co.uk/collections/coffee"),
         ("Square Mile", "https://shop.squaremilecoffee.com/collections/coffee"),
         ("Has Bean", "https://www.hasbean.co.uk/collections/coffee"),
-        ("Assembly", "https://www.assemblycoffee.co.uk/collections/coffee"),
+        ("Assembly", "https://assemblycoffee.com/collections/all"),
         ("Dark Arts", "https://www.darkartscoffee.co.uk/collections/coffee"),
         ("Round Hill", "https://www.roundhillroastery.com/collections/coffee"),
     ];
@@ -87,7 +87,7 @@ async fn test_roaster_website(url: &str) -> Result<(usize, &'static str)> {
     let body = response.text().await?;
     let document = Html::parse_document(&body);
 
-    // Try multiple common Shopify selectors
+    // Try multiple common Shopify and e-commerce selectors
     let selectors = vec![
         ".grid__item",
         ".product-item",
@@ -95,6 +95,11 @@ async fn test_roaster_website(url: &str) -> Result<(usize, &'static str)> {
         ".product-grid-item",
         "div[class*='ProductItem']",
         "article[class*='product']",
+        "li[class*='product']",
+        ".card-wrapper",
+        "div[class*='card']",
+        "[data-product]",
+        "article",
     ];
 
     for selector_str in selectors {

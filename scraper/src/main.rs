@@ -121,8 +121,9 @@ async fn scrape_has_bean() -> Result<Vec<Coffee>> {
 
 async fn scrape_assembly() -> Result<Vec<Coffee>> {
     info!("Scraping Assembly Coffee");
-    let url = "https://www.assemblycoffee.co.uk/collections/coffee";
-    scrape_shopify_store(url, "Assembly Coffee", "https://www.assemblycoffee.co.uk").await
+    // Assembly uses .com not .co.uk
+    let url = "https://assemblycoffee.com/collections/all";
+    scrape_shopify_store(url, "Assembly Coffee", "https://assemblycoffee.com").await
 }
 
 async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
@@ -140,8 +141,13 @@ async fn scrape_pact_coffee() -> Result<Vec<Coffee>> {
     let product_selectors = vec![
         ".product-card",
         "[data-component='ProductCard']",
+        "[data-testid='product-card']",
         "article",
+        "div[class*='ProductCard']",
         "div[class*='product']",
+        "li[class*='product']",
+        ".card-wrapper",
+        "[data-product]",
     ];
 
     let mut coffees = Vec::new();
@@ -275,13 +281,17 @@ async fn scrape_shopify_store(
     let body = client.get(collection_url).send().await?.text().await?;
     let document = Html::parse_document(&body);
 
-    // Standard Shopify selectors
+    // Standard Shopify and e-commerce selectors
     let product_selectors = vec![
         ".grid__item",
         ".product-item",
         ".product-card",
         ".product-grid-item",
-        "div[class*='product']",
+        "div[class*='ProductItem']",
+        "article[class*='product']",
+        "li[class*='product']",
+        ".card-wrapper",
+        "[data-product]",
     ];
 
     let mut coffees = Vec::new();
