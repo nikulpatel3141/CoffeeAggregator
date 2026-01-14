@@ -14,7 +14,7 @@ All scrapers now use a **dual-approach** for maximum reliability:
    - Supports various Shopify themes and custom sites
    - Extensive title/name detection patterns
 
-## Current Status: 5/5 Scrapers Active ✅
+## Current Status: 6/6 Scrapers Active ✅
 
 All active scrapers are working properly. The system has been streamlined to focus on reliable UK specialty coffee roasters.
 
@@ -23,8 +23,9 @@ All active scrapers are working properly. The system has been streamlined to foc
 1. **Origin Coffee** - JSON API + HTML fallback
 2. **Rave Coffee** - JSON API + HTML fallback
 3. **Has Bean** - JSON API + HTML fallback
-4. **Dark Arts** - JSON API + HTML fallback
-5. **Round Hill** - JSON API + HTML fallback
+4. **Assembly Coffee** - JSON API + HTML fallback (re-added)
+5. **Dark Arts** - JSON API + HTML fallback
+6. **Round Hill** - JSON API + HTML fallback
 
 ### Removed Scrapers
 
@@ -33,10 +34,6 @@ The following scrapers were removed due to persistent issues:
 **Square Mile Coffee** - Aggressive bot protection (HTTP 403)
 - Multiple strategies attempted (3 different endpoints, AJAX headers, delays)
 - Bot protection too aggressive for standard HTTP clients
-
-**Assembly Coffee** - Connection/endpoint issues
-- JSON API returned empty results
-- Suspected bot protection or incorrect endpoint
 
 **Pact Coffee** - React SPA architecture
 - Not a Shopify store
@@ -83,7 +80,7 @@ The following scrapers were removed due to persistent issues:
 
 ## System Status
 
-**5/5 scrapers operational** - All active scrapers use the dual-approach strategy (JSON API + HTML fallback) and are working reliably. The system focuses on quality over quantity, with only proven, stable scrapers included.
+**6/6 scrapers operational** - All active scrapers use the dual-approach strategy (JSON API + HTML fallback) and are working reliably. Assembly Coffee has been re-added after further testing.
 
 ## Testing After Updates
 
