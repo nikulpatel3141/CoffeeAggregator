@@ -70,7 +70,6 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_origin_coffee().await,
         scrape_rave_coffee().await,
         scrape_has_bean().await,
-        scrape_assembly().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
     ];
@@ -196,21 +195,6 @@ async fn scrape_has_bean() -> Result<Vec<Coffee>> {
             // Fallback to HTML scraping
             let url = "https://www.hasbean.co.uk/collections/coffee";
             scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
-        }
-    }
-}
-
-async fn scrape_assembly() -> Result<Vec<Coffee>> {
-    info!("Scraping Assembly Coffee");
-
-    // Try Shopify JSON API first
-    let json_url = "https://assemblycoffee.com/collections/all/products.json";
-    match scrape_shopify_json(json_url, "Assembly Coffee", "https://assemblycoffee.com").await {
-        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
-        _ => {
-            // Fallback to HTML scraping
-            let url = "https://assemblycoffee.com/collections/all";
-            scrape_shopify_store(url, "Assembly Coffee", "https://assemblycoffee.com").await
         }
     }
 }
