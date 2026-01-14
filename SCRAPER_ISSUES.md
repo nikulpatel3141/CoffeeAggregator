@@ -14,7 +14,7 @@ All scrapers now use a **dual-approach** for maximum reliability:
    - Supports various Shopify themes and custom sites
    - Extensive title/name detection patterns
 
-## Current Status: 6/6 Scrapers Active ✅
+## Current Status: 5/5 Scrapers Active ✅
 
 All active scrapers are working properly. The system has been streamlined to focus on reliable UK specialty coffee roasters.
 
@@ -25,7 +25,6 @@ All active scrapers are working properly. The system has been streamlined to foc
 3. **Has Bean** - JSON API + HTML fallback
 4. **Dark Arts** - JSON API + HTML fallback
 5. **Round Hill** - JSON API + HTML fallback
-6. **Extract Coffee Roasters** - JSON API + HTML fallback
 
 ### Removed Scrapers
 
@@ -43,6 +42,13 @@ The following scrapers were removed due to persistent issues:
 - Not a Shopify store
 - Products loaded via JavaScript after initial page load
 - Would require API endpoint discovery or headless browser
+
+**Redber Coffee** - HTTP 404 errors
+- Attempted multiple URL variations (.co.uk, collections/coffee, collections/all, collections/beans)
+- All endpoints returned 404
+
+**Extract Coffee Roasters** - HTTP 404 errors
+- Shopify store structure but collections endpoint not accessible
 
 ## Architecture Improvements
 
@@ -77,7 +83,7 @@ The following scrapers were removed due to persistent issues:
 
 ## System Status
 
-**6/6 scrapers operational** - All active scrapers use the dual-approach strategy (JSON API + HTML fallback) and are working reliably. Problematic scrapers have been removed to maintain system stability.
+**5/5 scrapers operational** - All active scrapers use the dual-approach strategy (JSON API + HTML fallback) and are working reliably. The system focuses on quality over quantity, with only proven, stable scrapers included.
 
 ## Testing After Updates
 
