@@ -72,6 +72,9 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_has_bean().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
+        scrape_volcano().await,
+        scrape_balance().await,
+        scrape_union().await,
     ];
 
     for result in scraper_results {
@@ -410,6 +413,51 @@ async fn scrape_round_hill() -> Result<Vec<Coffee>> {
             // Fallback to HTML scraping
             let url = "https://www.roundhillroastery.com/collections/coffee";
             scrape_shopify_store(url, "Round Hill Roastery", "https://www.roundhillroastery.com").await
+        }
+    }
+}
+
+async fn scrape_volcano() -> Result<Vec<Coffee>> {
+    info!("Scraping Volcano Coffee Works");
+
+    // Try Shopify JSON API first
+    let json_url = "https://volcanocoffeeworks.com/collections/all-coffee/products.json";
+    match scrape_shopify_json(json_url, "Volcano Coffee Works", "https://volcanocoffeeworks.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://volcanocoffeeworks.com/collections/all-coffee";
+            scrape_shopify_store(url, "Volcano Coffee Works", "https://volcanocoffeeworks.com").await
+        }
+    }
+}
+
+async fn scrape_balance() -> Result<Vec<Coffee>> {
+    info!("Scraping Balance Coffee");
+
+    // Try Shopify JSON API first
+    let json_url = "https://balancecoffee.co.uk/collections/speciality-coffee/products.json";
+    match scrape_shopify_json(json_url, "Balance Coffee", "https://balancecoffee.co.uk").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://balancecoffee.co.uk/collections/speciality-coffee";
+            scrape_shopify_store(url, "Balance Coffee", "https://balancecoffee.co.uk").await
+        }
+    }
+}
+
+async fn scrape_union() -> Result<Vec<Coffee>> {
+    info!("Scraping Union Coffee Roasters");
+
+    // Try Shopify JSON API first
+    let json_url = "https://unionroasted.com/collections/single-origins/products.json";
+    match scrape_shopify_json(json_url, "Union Coffee Roasters", "https://unionroasted.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://unionroasted.com/collections/single-origins";
+            scrape_shopify_store(url, "Union Coffee Roasters", "https://unionroasted.com").await
         }
     }
 }
