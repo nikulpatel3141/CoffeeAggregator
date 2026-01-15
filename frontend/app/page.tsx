@@ -22,6 +22,40 @@ interface Coffee {
   scraped_at: string
 }
 
+// Map country names to flag emojis
+const getCountryFlag = (country?: string): string => {
+  if (!country) return ''
+
+  const flagMap: { [key: string]: string } = {
+    'Ethiopia': '🇪🇹',
+    'Kenya': '🇰🇪',
+    'Colombia': '🇨🇴',
+    'Brazil': '🇧🇷',
+    'Guatemala': '🇬🇹',
+    'Costa Rica': '🇨🇷',
+    'Peru': '🇵🇪',
+    'Honduras': '🇭🇳',
+    'El Salvador': '🇸🇻',
+    'Nicaragua': '🇳🇮',
+    'Panama': '🇵🇦',
+    'Mexico': '🇲🇽',
+    'Rwanda': '🇷🇼',
+    'Burundi': '🇧🇮',
+    'Tanzania': '🇹🇿',
+    'Uganda': '🇺🇬',
+    'Yemen': '🇾🇪',
+    'Indonesia': '🇮🇩',
+    'India': '🇮🇳',
+    'Vietnam': '🇻🇳',
+    'Papua New Guinea': '🇵🇬',
+    'Jamaica': '🇯🇲',
+    'Bolivia': '🇧🇴',
+    'Ecuador': '🇪🇨',
+  }
+
+  return flagMap[country] || '🌍'
+}
+
 export default function Home() {
   const [coffees, setCoffees] = useState<Coffee[]>([])
   const [loading, setLoading] = useState(true)
@@ -220,6 +254,7 @@ export default function Home() {
                     <p className="text-gray-600 mb-2 font-medium">{coffee.roaster}</p>
                     {(coffee.origin || coffee.region) && (
                       <p className="text-sm text-gray-500 mb-3">
+                        <span className="mr-1">{getCountryFlag(coffee.origin || coffee.region)}</span>
                         Origin: {coffee.region || coffee.origin}
                       </p>
                     )}
