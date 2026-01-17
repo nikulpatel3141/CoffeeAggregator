@@ -51,35 +51,33 @@ export default function SubscriptionsTab() {
         </p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {subscriptions.map((sub, index) => (
           <div
             key={index}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-transparent dark:border-gray-700 hover:shadow-xl transition-shadow"
           >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-amber-900 dark:text-amber-400 mb-1">
+                <h3 className="text-lg font-bold text-amber-900 dark:text-amber-400">
                   {sub.roaster}
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{sub.notes}</p>
-                <div className="inline-block bg-amber-50 dark:bg-gray-700/50 rounded-lg px-3 py-1.5 border border-amber-200 dark:border-gray-600">
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    250g every 2 weeks
-                  </p>
-                  <p className="text-lg font-bold text-amber-900 dark:text-amber-400">
-                    {sub.price}
-                  </p>
-                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{sub.notes}</p>
               </div>
-              <a
-                href={sub.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-amber-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-amber-700 transition-colors font-medium self-start"
-              >
-                View Subscription
-              </a>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">250g every 2 weeks</p>
+                  <p className="text-xl font-bold text-amber-900 dark:text-amber-400">{sub.price}</p>
+                </div>
+                <a
+                  href={sub.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-amber-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium whitespace-nowrap"
+                >
+                  View Subscription
+                </a>
+              </div>
             </div>
           </div>
         ))}
