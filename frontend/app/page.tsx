@@ -67,7 +67,7 @@ export default function Home() {
     roaster: '',
     region: '',
     minPrice: 0,
-    maxPrice: 100,
+    maxPrice: 0, // Will be set when data loads
     tastingNotes: '',
   })
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
@@ -86,6 +86,13 @@ export default function Home() {
       document.documentElement.classList.add('dark')
     }
   }, [])
+
+  // Update max price filter when data loads
+  useEffect(() => {
+    if (maxPrice > 0 && filters.maxPrice === 0) {
+      setFilters(prev => ({ ...prev, maxPrice }))
+    }
+  }, [maxPrice, filters.maxPrice])
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode
@@ -121,20 +128,30 @@ export default function Home() {
     }
   }
 
-  // Extract unique roasters and regions for filter dropdowns
-  const { roasters, regions } = useMemo(() => {
+  // Extract unique roasters, regions, and max price for filter dropdowns
+  const { roasters, regions, maxPrice } = useMemo(() => {
     const roasterSet = new Set<string>()
     const regionSet = new Set<string>()
+    let calculatedMaxPrice = 0
 
     coffees.forEach((coffee) => {
       roasterSet.add(coffee.roaster)
       if (coffee.region) regionSet.add(coffee.region)
       if (coffee.origin) regionSet.add(coffee.origin)
+
+      // Calculate max price
+      if (coffee.price) {
+        const price = parseFloat(coffee.price.replace(/[^0-9.]/g, ''))
+        if (!isNaN(price) && price > calculatedMaxPrice) {
+          calculatedMaxPrice = price
+        }
+      }
     })
 
     return {
       roasters: Array.from(roasterSet).sort(),
       regions: Array.from(regionSet).sort(),
+      maxPrice: Math.ceil(calculatedMaxPrice) || 100, // Round up, default to 100 if no prices
     }
   }, [coffees])
 
@@ -253,6 +270,7 @@ export default function Home() {
               onFilterChange={setFilters}
               roasters={roasters}
               regions={regions}
+              maxPrice={maxPrice}
               regionFilterCollapsed={regionFilterCollapsed}
               onToggleRegionFilter={() => setRegionFilterCollapsed(!regionFilterCollapsed)}
             />

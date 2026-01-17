@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface FilterProps {
   onFilterChange: (filters: CoffeeFilterValues) => void
   roasters: string[]
   regions: string[]
+  maxPrice: number
   regionFilterCollapsed: boolean
   onToggleRegionFilter: () => void
 }
@@ -51,15 +52,24 @@ const getCountryFlag = (country: string): string => {
   return flagMap[country] || '🌍'
 }
 
-export default function CoffeeFilters({ onFilterChange, roasters, regions, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
+export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
     roaster: '',
     region: '',
     minPrice: 0,
-    maxPrice: 100,
+    maxPrice: maxPrice || 100,
     tastingNotes: '',
   })
+
+  // Update maxPrice when prop changes
+  useEffect(() => {
+    if (maxPrice > 0 && filters.maxPrice === 0) {
+      const newFilters = { ...filters, maxPrice }
+      setFilters(newFilters)
+      onFilterChange(newFilters)
+    }
+  }, [maxPrice])
 
   const updateFilter = (key: keyof CoffeeFilterValues, value: string | number) => {
     const newFilters = { ...filters, [key]: value }
@@ -73,7 +83,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, regio
       roaster: '',
       region: '',
       minPrice: 0,
-      maxPrice: 100,
+      maxPrice: maxPrice,
       tastingNotes: '',
     }
     setFilters(clearedFilters)
@@ -137,7 +147,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, regio
             <input
               type="range"
               min="0"
-              max="100"
+              max={maxPrice}
               value={filters.maxPrice}
               onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value))}
               className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
