@@ -201,7 +201,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2">
                 UK Specialty Coffee Tracker
@@ -210,55 +210,56 @@ export default function Home() {
                 Discover specialty coffee from top UK roasters, visualized by origin region
               </p>
             </div>
-            <button
-              onClick={toggleDarkMode}
-              className="p-3 rounded-full bg-white dark:bg-gray-700 shadow-lg hover:shadow-xl transition-all"
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? (
-                <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="flex gap-2 mt-6 border-b border-gray-300 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab('coffees')}
-              className={`px-6 py-3 font-medium transition-all ${
-                activeTab === 'coffees'
-                  ? 'border-b-2 border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400'
-              }`}
-            >
-              Coffee List
-            </button>
-            <button
-              onClick={() => setActiveTab('subscriptions')}
-              className={`px-6 py-3 font-medium transition-all ${
-                activeTab === 'subscriptions'
-                  ? 'border-b-2 border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400'
-              }`}
-            >
-              Subscriptions
-            </button>
-            <button
-              onClick={() => setActiveTab('readme')}
-              className={`px-6 py-3 font-medium transition-all ${
-                activeTab === 'readme'
-                  ? 'border-b-2 border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400'
-              }`}
-            >
-              About
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Tab Navigation */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('coffees')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    activeTab === 'coffees'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Coffee List
+                </button>
+                <button
+                  onClick={() => setActiveTab('subscriptions')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    activeTab === 'subscriptions'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Subscriptions
+                </button>
+                <button
+                  onClick={() => setActiveTab('readme')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    activeTab === 'readme'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  About
+                </button>
+              </div>
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all"
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? (
+                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
