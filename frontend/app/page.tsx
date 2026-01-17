@@ -1,16 +1,10 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import dynamic from 'next/dynamic'
 import CoffeeFilters, { CoffeeFilterValues } from '@/components/CoffeeFilters'
+import CoffeeMap from '@/components/CoffeeMap'
 import SubscriptionsTab from '@/components/SubscriptionsTab'
 import ReadmeTab from '@/components/ReadmeTab'
-
-// Dynamically import map component to avoid SSR issues with Leaflet
-const CoffeeMap = dynamic(() => import('@/components/CoffeeMap'), {
-  ssr: false,
-  loading: () => <div className="w-full h-[600px] bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />,
-})
 
 interface Coffee {
   name: string

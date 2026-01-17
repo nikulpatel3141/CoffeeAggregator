@@ -1,9 +1,7 @@
 'use client'
 
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet'
-import { LatLngExpression } from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import { useEffect } from 'react'
+import { Map, Marker, Overlay } from 'pigeon-maps'
+import { useState } from 'react'
 
 interface Coffee {
   name: string
@@ -19,7 +17,7 @@ interface Coffee {
 
 interface RegionData {
   name: string
-  position: LatLngExpression
+  position: [number, number]
   coffees: Coffee[]
 }
 
@@ -28,7 +26,7 @@ interface CoffeeMapProps {
 }
 
 // Map coffee origins/regions to geographic coordinates
-const regionCoordinates: Record<string, LatLngExpression> = {
+const regionCoordinates: Record<string, [number, number]> = {
   'Ethiopia': [9.145, 40.4897],
   'Kenya': [0.0236, 37.9062],
   'Colombia': [4.5709, -74.2973],
@@ -48,6 +46,11 @@ const regionCoordinates: Record<string, LatLngExpression> = {
   'Yemen': [15.552727, 48.516388],
   'Tanzania': [-6.369028, 34.888822],
   'Uganda': [1.373333, 32.290275],
+  'India': [20.5937, 78.9629],
+  'Vietnam': [14.0583, 108.2772],
+  'Jamaica': [18.1096, -77.2975],
+  'Bolivia': [-16.2902, -63.5887],
+  'Ecuador': [-1.8312, -78.1834],
   // Generic regions
   'Africa': [1.0, 20.0],
   'South America': [-8.7832, -55.4915],
@@ -56,7 +59,7 @@ const regionCoordinates: Record<string, LatLngExpression> = {
 }
 
 export default function CoffeeMap({ coffees }: CoffeeMapProps) {
-  const centerPosition: LatLngExpression = [20, 0] // Center on equator for coffee belt
+  const [selectedRegion, setSelectedRegion] = useState<RegionData | null>(null)
 
   // Group coffees by region
   const regionData: RegionData[] = Object.entries(
@@ -74,69 +77,57 @@ export default function CoffeeMap({ coffees }: CoffeeMapProps) {
     coffees,
   })).filter(region => region.position[0] !== 0 || region.position[1] !== 0)
 
-  useEffect(() => {
-    // Fix for Leaflet default icon issue in Next.js
-    if (typeof window !== 'undefined') {
-      const L = require('leaflet')
-      delete (L.Icon.Default.prototype as any)._getIconUrl
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      })
-    }
-  }, [])
-
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
-      <MapContainer
-        center={centerPosition}
-        zoom={2}
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={false}
+    <div className="w-full h-full rounded-lg overflow-hidden">
+      <Map
+        defaultCenter={[20, 0]}
+        defaultZoom={2}
+        mouseEvents={true}
+        touchEvents={true}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
         {regionData.map((region, idx) => (
-          <CircleMarker
+          <Marker
             key={idx}
-            center={region.position}
-            radius={Math.min(10 + region.coffees.length * 2, 30)}
-            fillColor="#d97706"
-            color="#92400e"
-            weight={2}
-            opacity={0.8}
-            fillOpacity={0.6}
-          >
-            <Popup maxWidth={300}>
-              <div className="p-2">
-                <h3 className="font-bold text-lg text-amber-900 mb-2">{region.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {region.coffees.length} coffee{region.coffees.length !== 1 ? 's' : ''} available
-                </p>
-                <div className="max-h-48 overflow-y-auto">
-                  {region.coffees.slice(0, 5).map((coffee, i) => (
-                    <div key={i} className="mb-2 pb-2 border-b border-gray-200 last:border-b-0">
-                      <p className="font-semibold text-sm">{coffee.name}</p>
-                      <p className="text-xs text-gray-600">{coffee.roaster}</p>
-                      {coffee.price && (
-                        <p className="text-xs text-amber-700 font-medium">{coffee.price}</p>
-                      )}
-                    </div>
-                  ))}
-                  {region.coffees.length > 5 && (
-                    <p className="text-xs text-gray-500 italic">
-                      +{region.coffees.length - 5} more...
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Popup>
-          </CircleMarker>
+            anchor={region.position}
+            onClick={() => setSelectedRegion(region)}
+          />
         ))}
-      </MapContainer>
+
+        {selectedRegion && (
+          <Overlay anchor={selectedRegion.position} offset={[120, 79]}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 max-w-xs border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setSelectedRegion(null)}
+                className="float-right text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                ✕
+              </button>
+              <h3 className="font-bold text-lg text-amber-900 dark:text-amber-400 mb-2">
+                {selectedRegion.name}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                {selectedRegion.coffees.length} coffee{selectedRegion.coffees.length !== 1 ? 's' : ''} available
+              </p>
+              <div className="max-h-48 overflow-y-auto">
+                {selectedRegion.coffees.slice(0, 5).map((coffee, i) => (
+                  <div key={i} className="mb-2 pb-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">{coffee.name}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{coffee.roaster}</p>
+                    {coffee.price && (
+                      <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">{coffee.price}</p>
+                    )}
+                  </div>
+                ))}
+                {selectedRegion.coffees.length > 5 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                    +{selectedRegion.coffees.length - 5} more...
+                  </p>
+                )}
+              </div>
+            </div>
+          </Overlay>
+        )}
+      </Map>
     </div>
   )
 }
