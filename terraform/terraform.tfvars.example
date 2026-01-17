@@ -1,4 +1,10 @@
 project_id    = "your-gcp-project-id"
 region        = "europe-west2"
-github_token  = "your-github-personal-access-token"
-repo_url      = "github.com/username/CoffeeTracker"
+
+# GitHub repository configuration
+# Use the same repo with a build branch, or a separate repo like CoffeeAggregatorWebsite
+repo_url      = "github.com/nikulpatel3141/CoffeeAggregator"
+target_branch = "build"
+
+# Note: GitHub App credentials are stored in Secret Manager, not here!
+# See GITHUB_APP_SETUP.md for instructions on setting up GitHub App authentication

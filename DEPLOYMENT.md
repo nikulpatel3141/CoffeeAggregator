@@ -2,40 +2,65 @@
 
 ## Architecture Overview
 
-The CoffeeTracker uses a static site architecture with automated data updates:
+The Coffee Aggregator uses a static site architecture with automated data pipeline:
 
 ```
-┌──────────────┐     ┌────────────┐     ┌──────────┐     ┌────────┐
-│   Scraper    │────▶│ Firestore  │────▶│ Builder  │────▶│ GitHub │
-│  (Cloud Run) │     │            │     │(Cloud Run)│     │        │
-└──────────────┘     └────────────┘     └──────────┘     └────────┘
-   Daily 6 AM UK         Database         Daily 7 AM UK        │
-                                                                │
-                                                                ▼
-                                                          ┌──────────┐
-                                                          │  Vercel  │
-                                                          │ (Static) │
-                                                          └──────────┘
+┌────────────────┐
+│ Cloud Scheduler│  Daily 6 AM UK
+└───────┬────────┘
+        │
+        ▼
+┌─────────────────┐
+│ Cloud Workflows │  Orchestrates pipeline
+└───────┬─────────┘
+        │
+        ├──▶ ┌──────────────┐     ┌────────────┐
+        │    │   Scraper    │────▶│ Firestore  │
+        │    │  (Cloud Run) │     │  Database  │
+        │    └──────────────┘     └─────┬──────┘
+        │                               │
+        └──▶ ┌──────────────┐          │
+             │   Builder    │◀─────────┘
+             │  (Cloud Run) │
+             └──────┬───────┘
+                    │ GitHub App Auth
+                    ▼
+              ┌──────────┐
+              │  GitHub  │  (build branch)
+              └─────┬────┘
+                    │ Auto-deploy
+                    ▼
+              ┌──────────┐
+              │  Vercel  │
+              │ (Static) │
+              └──────────┘
 ```
 
 ## Components
 
-1. **Scraper** (GCP Cloud Run)
-   - Runs daily at 6 AM UK time
+1. **Cloud Workflows** (Orchestration)
+   - Triggered daily at 6 AM UK time
+   - Runs scraper → builder as atomic pipeline
+   - Built-in error handling and retries
+   - Free tier: 5000 internal steps/month
+
+2. **Scraper** (GCP Cloud Run)
    - Scrapes 8 UK coffee roasters
    - Stores data in Firestore
+   - Triggered by workflow
 
-2. **Builder** (GCP Cloud Run)
-   - Runs daily at 7 AM UK time (after scraping)
+3. **Builder** (GCP Cloud Run)
    - Reads data from Firestore
    - Exports to JSON files
-   - Commits to GitHub (`frontend/public/data/`)
+   - Uses GitHub App for authentication
+   - Commits to `build` branch (configurable)
+   - Triggered by workflow after scraper
 
-3. **Frontend** (Vercel)
+4. **Frontend** (Vercel)
    - Static Next.js site
    - Reads from `/data/coffees.json`
-   - Auto-deploys when GitHub updates
-   - Displays interactive map
+   - Auto-deploys from `build` branch
+   - Displays interactive coffee catalog
 
 ## Setup Instructions
 
@@ -53,20 +78,41 @@ gcloud services enable \
   run.googleapis.com \
   firestore.googleapis.com \
   cloudscheduler.googleapis.com \
-  cloudbuild.googleapis.com
+  cloudbuild.googleapis.com \
+  workflows.googleapis.com \
+  secretmanager.googleapis.com
 
 # Authenticate Docker with GCR
 gcloud auth configure-docker
 ```
 
-### 2. GitHub Personal Access Token
+### 2. GitHub App Setup
 
-Create a GitHub Personal Access Token with `repo` permissions:
+Instead of using a Personal Access Token, we use GitHub Apps for better security:
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate new token (classic)
-3. Select scope: `repo` (Full control of private repositories)
-4. Copy the token (you won't see it again!)
+1. **Create a GitHub App** - Follow detailed instructions in [GITHUB_APP_SETUP.md](./GITHUB_APP_SETUP.md)
+   - Go to https://github.com/settings/apps/new
+   - Name: "CoffeeAggregator Builder"
+   - Permissions: Contents (Read and write)
+   - Generate and download private key
+
+2. **Store credentials in Secret Manager**:
+   ```bash
+   # App ID (e.g., 123456)
+   echo -n "YOUR_APP_ID" | gcloud secrets create github-app-id --data-file=-
+
+   # Installation ID (e.g., 12345678)
+   echo -n "YOUR_INSTALLATION_ID" | gcloud secrets create github-app-installation-id --data-file=-
+
+   # Private key
+   gcloud secrets create github-app-private-key --data-file=/path/to/your-app.private-key.pem
+   ```
+
+3. **Create target branch** (if using same repo):
+   ```bash
+   git checkout -b build
+   git push -u origin build
+   ```
 
 ### 3. Terraform Infrastructure
 
@@ -78,8 +124,9 @@ cp terraform.tfvars.example terraform.tfvars
 
 # Edit terraform.tfvars with your values:
 # - project_id: Your GCP project ID
-# - github_token: Your GitHub Personal Access Token
-# - repo_url: github.com/yourusername/CoffeeTracker
+# - repo_url: github.com/yourusername/CoffeeAggregator (or CoffeeAggregatorWebsite)
+# - target_branch: build (or main if using separate repo)
+# Note: No github_token needed! GitHub App handles authentication.
 
 # Initialize Terraform
 terraform init
@@ -94,9 +141,11 @@ terraform apply
 This creates:
 - Firestore database
 - Cloud Run service for scraper
-- Cloud Run service for builder
-- Cloud Scheduler jobs (scraper at 6 AM, builder at 7 AM UK time)
+- Cloud Run service for builder (with GitHub App authentication)
+- Cloud Workflows pipeline (orchestrates scraper → builder)
+- Cloud Scheduler job (triggers workflow at 6 AM UK time)
 - Service accounts and IAM permissions
+- Secret Manager IAM bindings
 
 ### 4. Build and Deploy Scraper
 

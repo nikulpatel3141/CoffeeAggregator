@@ -1,0 +1,84 @@
+# Cloud Workflows definition for Coffee Aggregator pipeline
+# This workflow orchestrates the scraper and builder services as a single pipeline
+
+main:
+  steps:
+    - init:
+        assign:
+          - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - region: "europe-west2"
+          - scraper_url: ${scraper_url}
+          - builder_url: ${builder_url}
+
+    - log_start:
+        call: sys.log
+        args:
+          text: "Starting Coffee Aggregator pipeline"
+          severity: INFO
+
+    # Step 1: Run the scraper
+    - run_scraper:
+        call: http.post
+        args:
+          url: ${scraper_url}
+          auth:
+            type: OIDC
+        result: scraper_response
+
+    - log_scraper_complete:
+        call: sys.log
+        args:
+          text: ${"Scraper completed with status: " + string(scraper_response.code)}
+          severity: INFO
+
+    - check_scraper_success:
+        switch:
+          - condition: ${scraper_response.code == 200}
+            next: run_builder
+        next: scraper_failed
+
+    # Step 2: Run the builder
+    - run_builder:
+        call: http.post
+        args:
+          url: ${builder_url}
+          auth:
+            type: OIDC
+        result: builder_response
+
+    - log_builder_complete:
+        call: sys.log
+        args:
+          text: ${"Builder completed with status: " + string(builder_response.code)}
+          severity: INFO
+
+    - check_builder_success:
+        switch:
+          - condition: ${builder_response.code == 200}
+            next: pipeline_success
+        next: builder_failed
+
+    # Success path
+    - pipeline_success:
+        call: sys.log
+        args:
+          text: "Pipeline completed successfully"
+          severity: INFO
+        return: "SUCCESS"
+
+    # Error paths
+    - scraper_failed:
+        call: sys.log
+        args:
+          text: ${"Scraper failed with status: " + string(scraper_response.code)}
+          severity: ERROR
+        raise:
+          message: ${"Scraper failed with status: " + string(scraper_response.code)}
+
+    - builder_failed:
+        call: sys.log
+        args:
+          text: ${"Builder failed with status: " + string(builder_response.code)}
+          severity: ERROR
+        raise:
+          message: ${"Builder failed with status: " + string(builder_response.code)}

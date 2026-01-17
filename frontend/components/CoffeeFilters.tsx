@@ -64,6 +64,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
   })
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
 
   // Update maxPrice when prop changes
   useEffect(() => {
@@ -74,28 +75,67 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
     }
   }, [maxPrice])
 
-  const updateFilter = (key: keyof CoffeeFilterValues, value: string | number) => {
+  const updateFilter = (key: keyof CoffeeFilterValues, value: string | number, suppressAutocomplete = false) => {
     const newFilters = { ...filters, [key]: value }
     setFilters(newFilters)
     onFilterChange(newFilters)
 
     // Update suggestions for tasting notes
-    if (key === 'tastingNotes' && typeof value === 'string') {
+    if (key === 'tastingNotes' && typeof value === 'string' && !suppressAutocomplete) {
       if (value.length > 0) {
         const suggestions = tastingNotes.filter(note =>
           note.toLowerCase().includes(value.toLowerCase())
         )
         setFilteredSuggestions(suggestions)
         setShowSuggestions(true)
+        setSelectedSuggestionIndex(-1)
       } else {
         setShowSuggestions(false)
+        setSelectedSuggestionIndex(-1)
       }
+    } else if (key === 'tastingNotes' && suppressAutocomplete) {
+      setShowSuggestions(false)
+      setSelectedSuggestionIndex(-1)
     }
   }
 
   const selectSuggestion = (suggestion: string) => {
-    updateFilter('tastingNotes', suggestion)
+    updateFilter('tastingNotes', suggestion, true)
     setShowSuggestions(false)
+    setSelectedSuggestionIndex(-1)
+  }
+
+  const handleTastingNotesKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || filteredSuggestions.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+      }
+      return
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedSuggestionIndex(prev =>
+          prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1)
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < filteredSuggestions.length) {
+          selectSuggestion(filteredSuggestions[selectedSuggestionIndex])
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setShowSuggestions(false)
+        setSelectedSuggestionIndex(-1)
+        break
+    }
   }
 
   const clearFilters = () => {
@@ -187,6 +227,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
             placeholder="e.g., chocolate, fruity, floral..."
             value={filters.tastingNotes}
             onChange={(e) => updateFilter('tastingNotes', e.target.value)}
+            onKeyDown={handleTastingNotesKeyDown}
             onFocus={() => filters.tastingNotes && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -198,7 +239,11 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
                   key={index}
                   type="button"
                   onClick={() => selectSuggestion(suggestion)}
-                  className="w-full text-left px-3 py-2 hover:bg-amber-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 capitalize"
+                  className={`w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 capitalize ${
+                    index === selectedSuggestionIndex
+                      ? 'bg-amber-100 dark:bg-gray-600'
+                      : 'hover:bg-amber-50 dark:hover:bg-gray-600'
+                  }`}
                 >
                   {suggestion}
                 </button>
@@ -256,7 +301,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
                 {tastingNotes.slice(0, 20).map((note) => (
                   <button
                     key={note}
-                    onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note)}
+                    onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note, true)}
                     className={`px-2 py-1 text-xs rounded-md transition-colors capitalize ${
                       filters.tastingNotes === note
                         ? 'bg-amber-600 text-white shadow-sm'

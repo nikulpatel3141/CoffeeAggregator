@@ -1,3 +1,5 @@
+mod github_auth;
+
 use anyhow::Result;
 use axum::{routing::post, Router};
 use chrono::Utc;
@@ -60,8 +62,22 @@ async fn run_build() -> Result<()> {
     info!("Starting static site build");
 
     let project_id = std::env::var("GCP_PROJECT_ID")?;
-    let github_token = std::env::var("GITHUB_TOKEN")?;
     let repo_url = std::env::var("REPO_URL")?; // e.g., "github.com/user/repo"
+    let target_branch = std::env::var("TARGET_BRANCH").unwrap_or_else(|_| "main".to_string());
+
+    // Generate GitHub App installation token
+    info!("Authenticating with GitHub App");
+    let github_token = if let (Ok(app_id), Ok(installation_id), Ok(private_key)) = (
+        std::env::var("GITHUB_APP_ID"),
+        std::env::var("GITHUB_APP_INSTALLATION_ID"),
+        std::env::var("GITHUB_APP_PRIVATE_KEY"),
+    ) {
+        github_auth::get_github_token(&app_id, &installation_id, &private_key).await?
+    } else {
+        // Fallback to PAT for backward compatibility (will be removed)
+        info!("GitHub App credentials not found, falling back to GITHUB_TOKEN");
+        std::env::var("GITHUB_TOKEN")?
+    };
 
     let db = FirestoreDb::new(&project_id).await?;
 
@@ -79,7 +95,7 @@ async fn run_build() -> Result<()> {
 
     // Clone or update the repository
     info!("Setting up Git repository");
-    setup_git_repo(&github_token, &repo_url).await?;
+    setup_git_repo(&github_token, &repo_url, &target_branch).await?;
 
     // Export data to JSON files
     info!("Exporting data to JSON");
@@ -87,67 +103,116 @@ async fn run_build() -> Result<()> {
 
     // Commit and push to GitHub
     info!("Committing and pushing to GitHub");
-    commit_and_push().await?;
+    commit_and_push(&target_branch).await?;
 
     info!("Build completed successfully");
     Ok(())
 }
 
-async fn setup_git_repo(github_token: &str, repo_url: &str) -> Result<()> {
+async fn setup_git_repo(github_token: &str, repo_url: &str, target_branch: &str) -> Result<()> {
     let repo_path = "/tmp/coffee-tracker-repo";
 
     // Check if repo already exists
     if std::path::Path::new(repo_path).exists() {
-        info!("Repository exists, pulling latest changes");
+        info!("Repository exists, pulling latest changes from {}", target_branch);
         std::env::set_current_dir(repo_path)?;
 
-        // Pull latest changes
+        // Fetch all branches
         let output = Command::new("git")
-            .args(&["pull", "origin", "main"])
+            .args(&["fetch", "origin"])
             .output()?;
 
         if !output.status.success() {
             tracing::warn!(
-                "Git pull failed: {}",
+                "Git fetch failed: {}",
                 String::from_utf8_lossy(&output.stderr)
             );
-            // If pull fails, remove and re-clone
+            // If fetch fails, remove and re-clone
             std::fs::remove_dir_all(repo_path)?;
-            clone_repo(github_token, repo_url, repo_path).await?;
+            clone_repo(github_token, repo_url, repo_path, target_branch).await?;
+            return Ok(());
+        }
+
+        // Checkout target branch
+        let output = Command::new("git")
+            .args(&["checkout", target_branch])
+            .output()?;
+
+        if !output.status.success() {
+            info!("Branch {} doesn't exist locally, creating it", target_branch);
+            // Try to create branch from origin if it exists
+            Command::new("git")
+                .args(&["checkout", "-b", target_branch, &format!("origin/{}", target_branch)])
+                .output()
+                .or_else(|_| {
+                    // If origin branch doesn't exist, create orphan branch
+                    info!("Creating new orphan branch {}", target_branch);
+                    Command::new("git")
+                        .args(&["checkout", "--orphan", target_branch])
+                        .output()
+                })?;
+        }
+
+        // Pull latest changes from target branch
+        let output = Command::new("git")
+            .args(&["pull", "origin", target_branch])
+            .output()?;
+
+        if !output.status.success() {
+            tracing::warn!(
+                "Git pull failed (might be a new branch): {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
     } else {
-        clone_repo(github_token, repo_url, repo_path).await?;
+        clone_repo(github_token, repo_url, repo_path, target_branch).await?;
     }
 
     Ok(())
 }
 
-async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str) -> Result<()> {
-    info!("Cloning repository");
+async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_branch: &str) -> Result<()> {
+    info!("Cloning repository (branch: {})", target_branch);
 
     // Use token for authentication
     let auth_url = format!("https://{}@{}", github_token, repo_url);
 
+    // Clone with specific branch if it exists, otherwise clone and create branch
     let output = Command::new("git")
-        .args(&["clone", &auth_url, repo_path])
+        .args(&["clone", "--branch", target_branch, &auth_url, repo_path])
         .output()?;
 
     if !output.status.success() {
-        anyhow::bail!(
-            "Failed to clone repository: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
+        // Branch might not exist, try cloning without branch and create it
+        info!("Branch {} not found, cloning default branch and creating it", target_branch);
+        let output = Command::new("git")
+            .args(&["clone", &auth_url, repo_path])
+            .output()?;
 
-    std::env::set_current_dir(repo_path)?;
+        if !output.status.success() {
+            anyhow::bail!(
+                "Failed to clone repository: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+
+        std::env::set_current_dir(repo_path)?;
+
+        // Create and checkout target branch
+        Command::new("git")
+            .args(&["checkout", "-b", target_branch])
+            .output()?;
+    } else {
+        std::env::set_current_dir(repo_path)?;
+    }
 
     // Configure git
     Command::new("git")
-        .args(&["config", "user.name", "Coffee Scraper Bot"])
+        .args(&["config", "user.name", "Coffee Aggregator Bot"])
         .output()?;
 
     Command::new("git")
-        .args(&["config", "user.email", "bot@coffeetracker.com"])
+        .args(&["config", "user.email", "bot@coffeeaggregator.com"])
         .output()?;
 
     Ok(())
@@ -190,7 +255,7 @@ async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
     Ok(())
 }
 
-async fn commit_and_push() -> Result<()> {
+async fn commit_and_push(target_branch: &str) -> Result<()> {
     // Add changes
     let output = Command::new("git")
         .args(&["add", "frontend/public/data/"])
@@ -224,14 +289,15 @@ async fn commit_and_push() -> Result<()> {
     }
 
     // Push to GitHub
+    info!("Pushing to branch: {}", target_branch);
     let output = Command::new("git")
-        .args(&["push", "origin", "main"])
+        .args(&["push", "origin", target_branch])
         .output()?;
 
     if !output.status.success() {
         anyhow::bail!("Failed to push: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    info!("Successfully pushed changes to GitHub");
+    info!("Successfully pushed changes to GitHub (branch: {})", target_branch);
     Ok(())
 }
