@@ -70,7 +70,6 @@ export default function Home() {
     maxPrice: 0, // Will be set when data loads
     tastingNotes: '',
   })
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [activeTab, setActiveTab] = useState<'coffees' | 'subscriptions' | 'readme'>('coffees')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [regionFilterCollapsed, setRegionFilterCollapsed] = useState(true)
@@ -128,16 +127,22 @@ export default function Home() {
     }
   }
 
-  // Extract unique roasters, regions, and max price for filter dropdowns
-  const { roasters, regions, maxPrice } = useMemo(() => {
+  // Extract unique roasters, regions, max price, and tasting notes for filter dropdowns
+  const { roasters, regions, maxPrice, tastingNotes } = useMemo(() => {
     const roasterSet = new Set<string>()
     const regionSet = new Set<string>()
+    const tastingNotesSet = new Set<string>()
     let calculatedMaxPrice = 0
 
     coffees.forEach((coffee) => {
       roasterSet.add(coffee.roaster)
       if (coffee.region) regionSet.add(coffee.region)
       if (coffee.origin) regionSet.add(coffee.origin)
+
+      // Collect all tasting notes
+      coffee.tasting_notes.forEach(note => {
+        if (note) tastingNotesSet.add(note.toLowerCase())
+      })
 
       // Calculate max price
       if (coffee.price) {
@@ -152,6 +157,7 @@ export default function Home() {
       roasters: Array.from(roasterSet).sort(),
       regions: Array.from(regionSet).sort(),
       maxPrice: Math.ceil(calculatedMaxPrice) || 100, // Round up, default to 100 if no prices
+      tastingNotes: Array.from(tastingNotesSet).sort(),
     }
   }, [coffees])
 
@@ -197,7 +203,7 @@ export default function Home() {
   }, [coffees, filters])
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors">
+    <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
@@ -265,40 +271,32 @@ export default function Home() {
         {/* Coffee List Tab */}
         {activeTab === 'coffees' && (
           <>
-            {/* Filters */}
-            <CoffeeFilters
-              onFilterChange={setFilters}
-              roasters={roasters}
-              regions={regions}
-              maxPrice={maxPrice}
-              regionFilterCollapsed={regionFilterCollapsed}
-              onToggleRegionFilter={() => setRegionFilterCollapsed(!regionFilterCollapsed)}
-            />
+            {/* Filters and Map Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Left: Filters */}
+              <CoffeeFilters
+                onFilterChange={setFilters}
+                roasters={roasters}
+                regions={regions}
+                maxPrice={maxPrice}
+                tastingNotes={tastingNotes}
+                regionFilterCollapsed={regionFilterCollapsed}
+                onToggleRegionFilter={() => setRegionFilterCollapsed(!regionFilterCollapsed)}
+              />
 
-            {/* View Toggle */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                    viewMode === 'map'
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Map View
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  List View
-                </button>
+              {/* Right: Map */}
+              <div className="sticky top-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden" style={{ height: '500px' }}>
+                  <CoffeeMap coffees={filteredCoffees} />
+                </div>
               </div>
+            </div>
+
+            {/* Coffee Count */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-400">
+                All Coffees
+              </h2>
               <p className="text-gray-700 dark:text-gray-300">
                 Showing <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> of{' '}
                 <span className="font-semibold text-amber-700 dark:text-amber-400">{coffees.length}</span> coffees
@@ -326,18 +324,11 @@ export default function Home() {
               </div>
             )}
 
-            {/* Map View */}
-            {!loading && !error && viewMode === 'map' && (
-              <div className="mb-8">
-                <CoffeeMap coffees={filteredCoffees} />
-              </div>
-            )}
-
-            {/* List View */}
-            {!loading && !error && viewMode === 'list' && (
+            {/* Coffee List */}
+            {!loading && !error && (
               <div>
                 {filteredCoffees.length === 0 ? (
-                  <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <p className="text-gray-600 dark:text-gray-400">
                       No coffees found matching your filters. Try adjusting your search criteria.
                     </p>

@@ -7,6 +7,7 @@ interface FilterProps {
   roasters: string[]
   regions: string[]
   maxPrice: number
+  tastingNotes: string[]
   regionFilterCollapsed: boolean
   onToggleRegionFilter: () => void
 }
@@ -52,7 +53,7 @@ const getCountryFlag = (country: string): string => {
   return flagMap[country] || '🌍'
 }
 
-export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
+export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, tastingNotes, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
     roaster: '',
@@ -61,6 +62,8 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
     maxPrice: maxPrice || 100,
     tastingNotes: '',
   })
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
 
   // Update maxPrice when prop changes
   useEffect(() => {
@@ -75,6 +78,24 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
     const newFilters = { ...filters, [key]: value }
     setFilters(newFilters)
     onFilterChange(newFilters)
+
+    // Update suggestions for tasting notes
+    if (key === 'tastingNotes' && typeof value === 'string') {
+      if (value.length > 0) {
+        const suggestions = tastingNotes.filter(note =>
+          note.toLowerCase().includes(value.toLowerCase())
+        )
+        setFilteredSuggestions(suggestions)
+        setShowSuggestions(true)
+      } else {
+        setShowSuggestions(false)
+      }
+    }
+  }
+
+  const selectSuggestion = (suggestion: string) => {
+    updateFilter('tastingNotes', suggestion)
+    setShowSuggestions(false)
   }
 
   const clearFilters = () => {
@@ -155,8 +176,8 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
           </div>
         </div>
 
-        {/* Tasting Notes */}
-        <div className="md:col-span-2">
+        {/* Tasting Notes with Autocomplete */}
+        <div className="md:col-span-2 relative">
           <label htmlFor="tastingNotes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tasting Notes
           </label>
@@ -166,8 +187,24 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
             placeholder="e.g., chocolate, fruity, floral..."
             value={filters.tastingNotes}
             onChange={(e) => updateFilter('tastingNotes', e.target.value)}
+            onFocus={() => filters.tastingNotes && setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
+          {showSuggestions && filteredSuggestions.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="w-full text-left px-3 py-2 hover:bg-amber-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 capitalize"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
