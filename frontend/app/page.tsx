@@ -86,25 +86,6 @@ export default function Home() {
     }
   }, [])
 
-  // Update max price filter when data loads
-  useEffect(() => {
-    if (maxPrice > 0 && filters.maxPrice === 0) {
-      setFilters(prev => ({ ...prev, maxPrice }))
-    }
-  }, [maxPrice])
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode
-    setIsDarkMode(newMode)
-    if (newMode) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
-  }
-
   const fetchCoffees = async () => {
     try {
       setLoading(true)
@@ -160,6 +141,25 @@ export default function Home() {
       tastingNotes: Array.from(tastingNotesSet).sort(),
     }
   }, [coffees])
+
+  // Update max price filter when data loads
+  useEffect(() => {
+    if (maxPrice > 0 && filters.maxPrice === 0) {
+      setFilters(prev => ({ ...prev, maxPrice }))
+    }
+  }, [maxPrice])
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode
+    setIsDarkMode(newMode)
+    if (newMode) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }
 
   // Apply filters to coffees
   const filteredCoffees = useMemo(() => {
