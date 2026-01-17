@@ -91,7 +91,7 @@ export default function Home() {
     if (maxPrice > 0 && filters.maxPrice === 0) {
       setFilters(prev => ({ ...prev, maxPrice }))
     }
-  }, [maxPrice, filters.maxPrice])
+  }, [maxPrice])
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode
