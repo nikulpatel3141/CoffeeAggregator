@@ -204,7 +204,7 @@ export default function Home() {
           <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2">
-                UK Specialty Coffee Tracker
+                ☕ UK Specialty Coffee Tracker
               </h1>
               <p className="text-gray-700 dark:text-gray-300 text-lg">
                 Discover specialty coffee from top UK roasters, visualized by origin region
