@@ -6,6 +6,8 @@ interface FilterProps {
   onFilterChange: (filters: CoffeeFilterValues) => void
   roasters: string[]
   regions: string[]
+  regionFilterCollapsed: boolean
+  onToggleRegionFilter: () => void
 }
 
 export interface CoffeeFilterValues {
@@ -17,7 +19,7 @@ export interface CoffeeFilterValues {
   tastingNotes: string
 }
 
-export default function CoffeeFilters({ onFilterChange, roasters, regions }: FilterProps) {
+export default function CoffeeFilters({ onFilterChange, roasters, regions, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
     roaster: '',
@@ -47,12 +49,12 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 border border-transparent dark:border-gray-700">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-amber-900">Filter Coffees</h2>
+        <h2 className="text-xl font-bold text-amber-900 dark:text-amber-400">Filter Coffees</h2>
         <button
           onClick={clearFilters}
-          className="text-sm text-amber-600 hover:text-amber-700 underline"
+          className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline"
         >
           Clear all filters
         </button>
@@ -61,7 +63,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Search */}
         <div>
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Search
           </label>
           <input
@@ -70,20 +72,20 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
             placeholder="Coffee name..."
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
         </div>
 
         {/* Roaster */}
         <div>
-          <label htmlFor="roaster" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="roaster" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Roaster
           </label>
           <select
             id="roaster"
             value={filters.roaster}
             onChange={(e) => updateFilter('roaster', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           >
             <option value="">All roasters</option>
             {roasters.map((roaster) => (
@@ -94,29 +96,9 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
           </select>
         </div>
 
-        {/* Region */}
-        <div>
-          <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
-            Region
-          </label>
-          <select
-            id="region"
-            value={filters.region}
-            onChange={(e) => updateFilter('region', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-          >
-            <option value="">All regions</option>
-            {regions.map((region) => (
-              <option key={region} value={region}>
-                {region}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Price Range */}
         <div className="md:col-span-2 lg:col-span-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Price Range: £{filters.minPrice} - £{filters.maxPrice}
           </label>
           <div className="flex gap-2 items-center">
@@ -125,22 +107,22 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
               placeholder="Min"
               value={filters.minPrice}
               onChange={(e) => updateFilter('minPrice', parseFloat(e.target.value) || 0)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
-            <span className="text-gray-500">-</span>
+            <span className="text-gray-500 dark:text-gray-400">-</span>
             <input
               type="number"
               placeholder="Max"
               value={filters.maxPrice}
               onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value) || 100)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>
         </div>
 
         {/* Tasting Notes */}
         <div className="md:col-span-2">
-          <label htmlFor="tastingNotes" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="tastingNotes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Tasting Notes
           </label>
           <input
@@ -149,9 +131,46 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions }: Fil
             placeholder="e.g., chocolate, fruity, floral..."
             value={filters.tastingNotes}
             onChange={(e) => updateFilter('tastingNotes', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
         </div>
+      </div>
+
+      {/* Collapsible Region Filter */}
+      <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <button
+          onClick={onToggleRegionFilter}
+          className="flex items-center justify-between w-full text-left"
+        >
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            🗺️ Filter by Origin Region (Visualization Aid)
+          </span>
+          <svg
+            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${regionFilterCollapsed ? '' : 'rotate-180'}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+
+        {!regionFilterCollapsed && (
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            {regions.map((region) => (
+              <button
+                key={region}
+                onClick={() => updateFilter('region', filters.region === region ? '' : region)}
+                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                  filters.region === region
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {region}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

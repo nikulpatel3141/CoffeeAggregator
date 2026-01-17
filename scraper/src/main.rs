@@ -75,6 +75,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_volcano().await,
         scrape_balance().await,
         scrape_union().await,
+        scrape_hermanos().await,
     ];
 
     for result in scraper_results {
@@ -458,6 +459,21 @@ async fn scrape_union() -> Result<Vec<Coffee>> {
             // Fallback to HTML scraping
             let url = "https://unionroasted.com/collections/single-origins";
             scrape_shopify_store(url, "Union Coffee Roasters", "https://unionroasted.com").await
+        }
+    }
+}
+
+async fn scrape_hermanos() -> Result<Vec<Coffee>> {
+    info!("Scraping Hermanos Colombian Coffee Roasters");
+
+    // Try Shopify JSON API first
+    let json_url = "https://hermanoscoffeeroasters.com/collections/all/products.json";
+    match scrape_shopify_json(json_url, "Hermanos Coffee", "https://hermanoscoffeeroasters.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://hermanoscoffeeroasters.com/collections/all";
+            scrape_shopify_store(url, "Hermanos Coffee", "https://hermanoscoffeeroasters.com").await
         }
     }
 }
