@@ -19,6 +19,38 @@ export interface CoffeeFilterValues {
   tastingNotes: string
 }
 
+// Map country names to flag emojis
+const getCountryFlag = (country: string): string => {
+  const flagMap: { [key: string]: string } = {
+    'Ethiopia': '🇪🇹',
+    'Kenya': '🇰🇪',
+    'Colombia': '🇨🇴',
+    'Brazil': '🇧🇷',
+    'Guatemala': '🇬🇹',
+    'Costa Rica': '🇨🇷',
+    'Peru': '🇵🇪',
+    'Honduras': '🇭🇳',
+    'El Salvador': '🇸🇻',
+    'Nicaragua': '🇳🇮',
+    'Panama': '🇵🇦',
+    'Mexico': '🇲🇽',
+    'Rwanda': '🇷🇼',
+    'Burundi': '🇧🇮',
+    'Tanzania': '🇹🇿',
+    'Uganda': '🇺🇬',
+    'Yemen': '🇾🇪',
+    'Indonesia': '🇮🇩',
+    'India': '🇮🇳',
+    'Vietnam': '🇻🇳',
+    'Papua New Guinea': '🇵🇬',
+    'Jamaica': '🇯🇲',
+    'Bolivia': '🇧🇴',
+    'Ecuador': '🇪🇨',
+  }
+
+  return flagMap[country] || '🌍'
+}
+
 export default function CoffeeFilters({ onFilterChange, roasters, regions, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
@@ -137,16 +169,16 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, regio
       </div>
 
       {/* Collapsible Region Filter */}
-      <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+      <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
         <button
           onClick={onToggleRegionFilter}
           className="flex items-center justify-between w-full text-left"
         >
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-            🗺️ Filter by Origin Region (Visualization Aid)
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            🗺️ Filter by Origin (Visualization Aid)
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${regionFilterCollapsed ? '' : 'rotate-180'}`}
+            className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${regionFilterCollapsed ? '' : 'rotate-180'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -155,18 +187,19 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, regio
         </button>
 
         {!regionFilterCollapsed && (
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {regions.map((region) => (
               <button
                 key={region}
                 onClick={() => updateFilter('region', filters.region === region ? '' : region)}
-                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                className={`px-2 py-1 text-xs rounded-md transition-colors inline-flex items-center gap-1 ${
                   filters.region === region
-                    ? 'bg-amber-600 text-white'
+                    ? 'bg-amber-600 text-white shadow-sm'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                {region}
+                <span>{getCountryFlag(region)}</span>
+                <span>{region}</span>
               </button>
             ))}
           </div>
