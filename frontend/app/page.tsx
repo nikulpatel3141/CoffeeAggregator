@@ -328,30 +328,29 @@ export default function Home() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredCoffees.map((coffee, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
                       >
-                        <h3 className="text-xl font-semibold text-amber-900 dark:text-amber-400 mb-2">
+                        <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-1">
                           {coffee.name}
                         </h3>
-                        <p className="text-gray-600 dark:text-gray-300 mb-2 font-medium">{coffee.roaster}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1 font-medium">{coffee.roaster}</p>
                         {(coffee.origin || coffee.region) && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                            Origin: {coffee.region || coffee.origin}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            {coffee.region || coffee.origin}
                             <span className="ml-1">{getCountryFlag(coffee.origin || coffee.region)}</span>
                           </p>
                         )}
                         {coffee.tasting_notes.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tasting Notes:</p>
-                            <div className="flex flex-wrap gap-2">
+                          <div className="mb-2">
+                            <div className="flex flex-wrap gap-1">
                               {coffee.tasting_notes.map((note, i) => (
                                 <span
                                   key={i}
-                                  className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-1 rounded"
+                                  className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
                                 >
                                   {note}
                                 </span>
@@ -360,14 +359,14 @@ export default function Home() {
                           </div>
                         )}
                         {coffee.price && (
-                          <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mb-3">{coffee.price}</p>
+                          <p className="text-base font-bold text-amber-600 dark:text-amber-400 mb-2">{coffee.price}</p>
                         )}
                         <div className="flex gap-2 items-center">
                           <a
                             href={coffee.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-block bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors"
+                            className="inline-block bg-amber-600 text-white text-sm px-3 py-1.5 rounded hover:bg-amber-700 transition-colors"
                           >
                             View Coffee
                           </a>
