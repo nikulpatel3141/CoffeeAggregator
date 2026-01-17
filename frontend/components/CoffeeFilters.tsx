@@ -133,21 +133,14 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, regio
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Price Range: £{filters.minPrice} - £{filters.maxPrice}
           </label>
-          <div className="flex gap-2 items-center">
+          <div className="px-1 pt-2">
             <input
-              type="number"
-              placeholder="Min"
-              value={filters.minPrice}
-              onChange={(e) => updateFilter('minPrice', parseFloat(e.target.value) || 0)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            />
-            <span className="text-gray-500 dark:text-gray-400">-</span>
-            <input
-              type="number"
-              placeholder="Max"
+              type="range"
+              min="0"
+              max="100"
               value={filters.maxPrice}
-              onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value) || 100)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
             />
           </div>
         </div>

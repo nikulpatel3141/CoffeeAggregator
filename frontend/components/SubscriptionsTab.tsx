@@ -5,55 +5,37 @@ export default function SubscriptionsTab() {
     {
       roaster: 'Origin Coffee',
       url: 'https://www.origincoffee.co.uk/collections/subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£9.50' },
-        { weight: '250g', frequency: '4 weeks', price: '£9.50' },
-      ],
+      price: '£9.50',
       notes: 'Flexible subscription, pause anytime',
     },
     {
       roaster: 'Rave Coffee',
       url: 'https://ravecoffee.co.uk/collections/coffee-subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£8.50' },
-        { weight: '250g', frequency: '4 weeks', price: '£8.50' },
-      ],
+      price: '£8.50',
       notes: 'Free delivery, choose your roast level',
     },
     {
       roaster: 'Has Bean',
       url: 'https://www.hasbean.co.uk/collections/subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£9.00' },
-        { weight: '250g', frequency: '4 weeks', price: '£9.00' },
-      ],
+      price: '£9.00',
       notes: 'Curated selections, detailed tasting notes',
     },
     {
       roaster: 'Dark Arts Coffee',
       url: 'https://www.darkartscoffee.co.uk/collections/coffee-subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£9.25' },
-        { weight: '250g', frequency: '4 weeks', price: '£9.25' },
-      ],
+      price: '£9.25',
       notes: 'Award-winning roaster, seasonal selections',
     },
     {
       roaster: 'Round Hill Roastery',
       url: 'https://www.roundhillroastery.com/collections/subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£8.75' },
-        { weight: '250g', frequency: '4 weeks', price: '£8.75' },
-      ],
+      price: '£8.75',
       notes: 'Ethically sourced, specialty grade',
     },
     {
       roaster: 'Hermanos Coffee',
       url: 'https://hermanoscoffeeroasters.com/collections/coffee-subscriptions',
-      plans: [
-        { weight: '250g', frequency: '2 weeks', price: '£10.00' },
-        { weight: '250g', frequency: '4 weeks', price: '£10.00' },
-      ],
+      price: '£10.00',
       notes: 'Colombian specialty, direct trade',
     },
   ]
@@ -75,44 +57,29 @@ export default function SubscriptionsTab() {
             key={index}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-transparent dark:border-gray-700 hover:shadow-xl transition-shadow"
           >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-              <div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="flex-1">
                 <h3 className="text-2xl font-bold text-amber-900 dark:text-amber-400 mb-1">
                   {sub.roaster}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{sub.notes}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{sub.notes}</p>
+                <div className="inline-block bg-amber-50 dark:bg-gray-700/50 rounded-lg px-4 py-2 border border-amber-200 dark:border-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    250g every 2 weeks
+                  </p>
+                  <p className="text-2xl font-bold text-amber-900 dark:text-amber-400">
+                    {sub.price}
+                  </p>
+                </div>
               </div>
               <a
                 href={sub.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 md:mt-0 inline-block bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                className="mt-4 md:mt-0 inline-block bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium self-start"
               >
                 View Subscription
               </a>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sub.plans.map((plan, planIndex) => (
-                <div
-                  key={planIndex}
-                  className="bg-amber-50 dark:bg-gray-700/50 rounded-lg p-4 border border-amber-200 dark:border-gray-600"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {plan.weight} every {plan.frequency}
-                      </p>
-                      <p className="text-2xl font-bold text-amber-900 dark:text-amber-400">
-                        {plan.price}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">per delivery</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         ))}

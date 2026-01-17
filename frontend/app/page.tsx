@@ -180,7 +180,7 @@ export default function Home() {
   }, [coffees, filters])
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors">
+    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
