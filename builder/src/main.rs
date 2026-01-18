@@ -5,8 +5,8 @@ use axum::{routing::post, Router};
 use chrono::Utc;
 use firestore::FirestoreDb;
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
 use std::process::Command;
+use tokio::net::TcpListener;
 use tracing::info;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,12 +36,10 @@ async fn main() -> Result<()> {
 
     let app = Router::new().route("/", post(build_handler));
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    info!("Starting builder service on {}", addr);
+    let listener = TcpListener::bind("0.0.0.0:8080").await?;
+    info!("Starting builder service on {}", listener.local_addr()?);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
@@ -236,7 +234,7 @@ async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
             .push(coffee);
     }
 
-    for (roaster, coffees) in by_roaster {
+    for (roaster, coffees) in &by_roaster {
         let filename = roaster.to_lowercase().replace(" ", "-");
         let json = serde_json::to_string_pretty(&coffees)?;
         std::fs::write(format!("{}/{}.json", data_dir, filename), json)?;
