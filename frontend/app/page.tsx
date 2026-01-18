@@ -240,7 +240,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-[1400px] mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
           <div className="flex justify-between items-start mb-4">
@@ -312,7 +312,7 @@ export default function Home() {
         {activeTab === 'coffees' && (
           <>
             {/* Filters and Map Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Left: Filters */}
               <CoffeeFilters
                 onFilterChange={setFilters}

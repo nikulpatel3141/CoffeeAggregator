@@ -118,7 +118,14 @@ Instead of using a Personal Access Token, we use GitHub Apps for better security
 
 **IMPORTANT**: Build and push Docker images BEFORE running Terraform!
 
+You have two options:
+
+#### Option A: Manual Build (Quickest)
+
 ```bash
+# Authenticate Docker with GCR
+gcloud auth configure-docker
+
 # Build and push scraper image
 cd scraper
 ./build.sh $PROJECT_ID
@@ -127,6 +134,19 @@ cd scraper
 cd ../builder
 ./build.sh $PROJECT_ID
 ```
+
+#### Option B: Set up CI/CD First (Recommended for ongoing development)
+
+Set up GitHub Actions to automatically build images on every push to main.
+See [CI_CD_SETUP.md](./CI_CD_SETUP.md) for detailed instructions.
+
+**Quick version:**
+1. Create GCP service account with storage.admin role
+2. Add `GCP_PROJECT_ID` and `GCP_SA_KEY` to GitHub repository secrets
+3. Manual build once (as shown in Option A)
+4. Future pushes to `main` will auto-build images
+
+After CI/CD setup, any code changes trigger automatic rebuilds!
 
 ### 4. Terraform Infrastructure
 
