@@ -247,7 +247,12 @@ export default function Home() {
             <div>
               <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-12 h-12">
-                  <path d="M8 12 L8 20 C8 22, 10 24, 12 24 L20 24 C22 24, 24 22, 24 20 L24 12 Z" fill="currentColor"/>
+                  <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
+                  <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
+                  <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <path d="M12 11 Q12 9, 13 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                  <path d="M16 10 Q16 8, 17 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                  <path d="M20 11 Q20 9, 21 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
                 </svg>
                 UK Specialty Coffee Tracker
               </h1>

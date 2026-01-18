@@ -44,6 +44,18 @@ export default function SubscriptionsTab() {
       price: '£9.50',
       notes: 'Iconic London roaster, sustainably sourced',
     },
+    {
+      roaster: 'Gotham Coffee',
+      url: 'https://gothamcoffee.com/collections/subscriptions',
+      price: '£10.50',
+      notes: 'Artisan roaster, single origin selections',
+    },
+    {
+      roaster: 'Coffee Compass',
+      url: 'https://www.coffeecompass.co.uk/collections/subscriptions',
+      price: '£9.75',
+      notes: 'Small batch roasting, ethically sourced',
+    },
   ]
 
   return (

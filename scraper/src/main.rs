@@ -77,6 +77,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_union().await,
         scrape_hermanos().await,
         scrape_monmouth().await,
+        scrape_gotham().await,
+        scrape_coffee_compass().await,
     ];
 
     for result in scraper_results {
@@ -485,4 +487,18 @@ async fn scrape_monmouth() -> Result<Vec<Coffee>> {
     // WooCommerce store - use generic scraper
     let url = "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/";
     scrape_shopify_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
+}
+
+async fn scrape_gotham() -> Result<Vec<Coffee>> {
+    info!("Scraping Gotham Coffee");
+
+    let url = "https://gothamcoffee.com/collections/arabica-origin-coffee";
+    scrape_shopify_store(url, "Gotham Coffee", "https://gothamcoffee.com").await
+}
+
+async fn scrape_coffee_compass() -> Result<Vec<Coffee>> {
+    info!("Scraping Coffee Compass");
+
+    let url = "https://www.coffeecompass.co.uk/collections/roasted-origin-coffee";
+    scrape_shopify_store(url, "Coffee Compass", "https://www.coffeecompass.co.uk").await
 }
