@@ -28,7 +28,7 @@ main:
     - log_scraper_complete:
         call: sys.log
         args:
-          text: $${"Scraper completed with status: " + string(scraper_response.code)}
+          text: $${'Scraper completed with status: ' + string(scraper_response.code)}
           severity: INFO
 
     - check_scraper_success:
@@ -49,7 +49,7 @@ main:
     - log_builder_complete:
         call: sys.log
         args:
-          text: $${"Builder completed with status: " + string(builder_response.code)}
+          text: $${'Builder completed with status: ' + string(builder_response.code)}
           severity: INFO
 
     - check_builder_success:
@@ -70,15 +70,15 @@ main:
     - scraper_failed:
         call: sys.log
         args:
-          text: $${"Scraper failed with status: " + string(scraper_response.code)}
+          text: $${'Scraper failed with status: ' + string(scraper_response.code)}
           severity: ERROR
         raise:
-          message: $${"Scraper failed with status: " + string(scraper_response.code)}
+          message: $${'Scraper failed with status: ' + string(scraper_response.code)}
 
     - builder_failed:
         call: sys.log
         args:
-          text: $${"Builder failed with status: " + string(builder_response.code)}
+          text: $${'Builder failed with status: ' + string(builder_response.code)}
           severity: ERROR
         raise:
-          message: $${"Builder failed with status: " + string(builder_response.code)}
+          message: $${'Builder failed with status: ' + string(builder_response.code)}
