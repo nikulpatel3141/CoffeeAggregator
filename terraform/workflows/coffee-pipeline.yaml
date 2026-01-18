@@ -5,7 +5,7 @@ main:
   steps:
     - init:
         assign:
-          - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - project_id: $${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
           - region: "europe-west2"
           - scraper_url: ${scraper_url}
           - builder_url: ${builder_url}
@@ -20,7 +20,7 @@ main:
     - run_scraper:
         call: http.post
         args:
-          url: ${scraper_url}
+          url: $${scraper_url}
           auth:
             type: OIDC
         result: scraper_response
@@ -28,12 +28,12 @@ main:
     - log_scraper_complete:
         call: sys.log
         args:
-          text: ${"Scraper completed with status: " + string(scraper_response.code)}
+          text: $${"Scraper completed with status: " + string(scraper_response.code)}
           severity: INFO
 
     - check_scraper_success:
         switch:
-          - condition: ${scraper_response.code == 200}
+          - condition: $${scraper_response.code == 200}
             next: run_builder
         next: scraper_failed
 
@@ -41,7 +41,7 @@ main:
     - run_builder:
         call: http.post
         args:
-          url: ${builder_url}
+          url: $${builder_url}
           auth:
             type: OIDC
         result: builder_response
@@ -49,12 +49,12 @@ main:
     - log_builder_complete:
         call: sys.log
         args:
-          text: ${"Builder completed with status: " + string(builder_response.code)}
+          text: $${"Builder completed with status: " + string(builder_response.code)}
           severity: INFO
 
     - check_builder_success:
         switch:
-          - condition: ${builder_response.code == 200}
+          - condition: $${builder_response.code == 200}
             next: pipeline_success
         next: builder_failed
 
@@ -70,15 +70,15 @@ main:
     - scraper_failed:
         call: sys.log
         args:
-          text: ${"Scraper failed with status: " + string(scraper_response.code)}
+          text: $${"Scraper failed with status: " + string(scraper_response.code)}
           severity: ERROR
         raise:
-          message: ${"Scraper failed with status: " + string(scraper_response.code)}
+          message: $${"Scraper failed with status: " + string(scraper_response.code)}
 
     - builder_failed:
         call: sys.log
         args:
-          text: ${"Builder failed with status: " + string(builder_response.code)}
+          text: $${"Builder failed with status: " + string(builder_response.code)}
           severity: ERROR
         raise:
-          message: ${"Builder failed with status: " + string(builder_response.code)}
+          message: $${"Builder failed with status: " + string(builder_response.code)}

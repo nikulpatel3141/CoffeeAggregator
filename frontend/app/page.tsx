@@ -52,6 +52,45 @@ const getCountryFlag = (country?: string): string => {
   return flagMap[country] || '🌍'
 }
 
+// Map tasting notes to emojis
+const getTastingNoteEmoji = (note: string): string => {
+  const lowerNote = note.toLowerCase()
+
+  // Fruits
+  if (lowerNote.includes('berry') || lowerNote.includes('berries')) return '🫐'
+  if (lowerNote.includes('cherry') || lowerNote.includes('cherries')) return '🍒'
+  if (lowerNote.includes('apple')) return '🍎'
+  if (lowerNote.includes('citrus') || lowerNote.includes('lemon') || lowerNote.includes('orange')) return '🍊'
+  if (lowerNote.includes('tropical') || lowerNote.includes('mango') || lowerNote.includes('pineapple')) return '🍍'
+  if (lowerNote.includes('stone fruit') || lowerNote.includes('peach') || lowerNote.includes('apricot')) return '🍑'
+  if (lowerNote.includes('grape') || lowerNote.includes('wine')) return '🍇'
+  if (lowerNote.includes('fruity') || lowerNote.includes('fruit')) return '🍓'
+
+  // Sweet/Dessert
+  if (lowerNote.includes('chocolate') || lowerNote.includes('cocoa')) return '🍫'
+  if (lowerNote.includes('caramel') || lowerNote.includes('toffee')) return '🍮'
+  if (lowerNote.includes('honey')) return '🍯'
+  if (lowerNote.includes('vanilla')) return '🍦'
+  if (lowerNote.includes('sugar') || lowerNote.includes('sweet')) return '🍬'
+
+  // Nuts
+  if (lowerNote.includes('nut') || lowerNote.includes('almond') || lowerNote.includes('hazelnut')) return '🥜'
+
+  // Floral/Herbal
+  if (lowerNote.includes('floral') || lowerNote.includes('jasmine') || lowerNote.includes('rose')) return '🌸'
+  if (lowerNote.includes('tea') || lowerNote.includes('black tea')) return '🍵'
+  if (lowerNote.includes('herbal')) return '🌿'
+
+  // Spices
+  if (lowerNote.includes('spice') || lowerNote.includes('cinnamon') || lowerNote.includes('clove')) return '🌶️'
+
+  // Other
+  if (lowerNote.includes('wine') || lowerNote.includes('winey')) return '🍷'
+  if (lowerNote.includes('butter')) return '🧈'
+
+  return ''
+}
+
 export default function Home() {
   const [coffees, setCoffees] = useState<Coffee[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,6 +105,7 @@ export default function Home() {
   })
   const [activeTab, setActiveTab] = useState<'coffees' | 'subscriptions' | 'readme'>('coffees')
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
 
   useEffect(() => {
     fetchCoffees()
@@ -197,7 +237,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <div className="max-w-[1600px] mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
           <div className="flex justify-between items-start mb-4">
@@ -291,15 +331,45 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Coffee Count */}
+            {/* Coffee Count and View Toggle */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-400">
                 All Coffees
               </h2>
-              <p className="text-gray-700 dark:text-gray-300">
-                Showing <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> of{' '}
-                <span className="font-semibold text-amber-700 dark:text-amber-400">{coffees.length}</span> coffees
-              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-gray-700 dark:text-gray-300">
+                  Showing <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> of{' '}
+                  <span className="font-semibold text-amber-700 dark:text-amber-400">{coffees.length}</span> coffees
+                </p>
+                <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                  <button
+                    onClick={() => setViewMode('card')}
+                    className={`p-2 rounded transition-colors ${
+                      viewMode === 'card'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm'
+                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                    aria-label="Card view"
+                  >
+                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded transition-colors ${
+                      viewMode === 'list'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm'
+                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                    aria-label="List view"
+                  >
+                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Loading State */}
@@ -332,7 +402,8 @@ export default function Home() {
                       No coffees found matching your filters. Try adjusting your search criteria.
                     </p>
                   </div>
-                ) : (
+                ) : viewMode === 'card' ? (
+                  /* Card View */
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredCoffees.map((coffee, index) => (
                       <div
@@ -352,14 +423,18 @@ export default function Home() {
                         {coffee.tasting_notes.length > 0 && (
                           <div className="mb-2">
                             <div className="flex flex-wrap gap-1">
-                              {coffee.tasting_notes.map((note, i) => (
-                                <span
-                                  key={i}
-                                  className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
-                                >
-                                  {note}
-                                </span>
-                              ))}
+                              {coffee.tasting_notes.map((note, i) => {
+                                const emoji = getTastingNoteEmoji(note)
+                                return (
+                                  <span
+                                    key={i}
+                                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
+                                  >
+                                    {emoji && <span className="mr-1">{emoji}</span>}
+                                    {note}
+                                  </span>
+                                )
+                              })}
                             </div>
                           </div>
                         )}
@@ -377,6 +452,65 @@ export default function Home() {
                           </a>
                           {coffee.in_stock && (
                             <span className="text-xs text-green-600 dark:text-green-400 font-medium">In Stock</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* List View */
+                  <div className="space-y-2">
+                    {filteredCoffees.map((coffee, index) => (
+                      <div
+                        key={index}
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow border border-transparent dark:border-gray-700 flex items-center gap-4"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              <h3 className="text-base font-semibold text-amber-900 dark:text-amber-400">
+                                {coffee.name}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{coffee.roaster}</p>
+                            </div>
+                            {(coffee.origin || coffee.region) && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <span>{getCountryFlag(coffee.origin || coffee.region)}</span>
+                                <span>{coffee.region || coffee.origin}</span>
+                              </div>
+                            )}
+                          </div>
+                          {coffee.tasting_notes.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {coffee.tasting_notes.map((note, i) => {
+                                const emoji = getTastingNoteEmoji(note)
+                                return (
+                                  <span
+                                    key={i}
+                                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
+                                  >
+                                    {emoji && <span className="mr-1">{emoji}</span>}
+                                    {note}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {coffee.price && (
+                            <p className="text-base font-bold text-amber-600 dark:text-amber-400 min-w-[60px] text-right">{coffee.price}</p>
+                          )}
+                          <a
+                            href={coffee.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-amber-600 text-white text-sm px-3 py-1.5 rounded hover:bg-amber-700 transition-colors whitespace-nowrap"
+                          >
+                            View Coffee
+                          </a>
+                          {coffee.in_stock && (
+                            <span className="text-xs text-green-600 dark:text-green-400 font-medium whitespace-nowrap">In Stock</span>
                           )}
                         </div>
                       </div>
