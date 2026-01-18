@@ -17,6 +17,7 @@ struct Coffee {
     region: Option<String>,
     tasting_notes: Vec<String>,
     price: Option<String>,
+    weight: Option<String>,  // e.g., "250g", "1kg"
     url: String,
     in_stock: bool,
     scraped_at: String,

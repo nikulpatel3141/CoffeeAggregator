@@ -170,18 +170,19 @@ fn select_best_variant(variants: &Vec<serde_json::Value>) -> (Option<String>, Op
 fn extract_weight_in_grams(text: &str) -> i32 {
     let text_lower = text.to_lowercase();
 
-    // Match patterns like "250g", "250 g", "1kg", "1 kg"
-    if let Some(captures) = regex::Regex::new(r"(\d+(?:\.\d+)?)\s*(g|kg)")
-        .ok()
-        .and_then(|re| re.captures(&text_lower))
-    {
-        if let Some(num) = captures.get(1).and_then(|m| m.as_str().parse::<f32>().ok()) {
-            let unit = captures.get(2).map(|m| m.as_str()).unwrap_or("g");
-            return if unit == "kg" {
-                (num * 1000.0) as i32
-            } else {
-                num as i32
-            };
+    // Look for weight patterns like "250g", "250 g", "1kg", "1 kg"
+    let words: Vec<&str> = text_lower.split_whitespace().collect();
+
+    for word in words {
+        // Try to find a number followed by g or kg
+        if let Some(pos) = word.find("kg") {
+            if let Ok(num) = word[..pos].parse::<f32>() {
+                return (num * 1000.0) as i32;
+            }
+        } else if let Some(pos) = word.find('g') {
+            if let Ok(num) = word[..pos].parse::<f32>() {
+                return num as i32;
+            }
         }
     }
 
@@ -192,19 +193,33 @@ fn extract_weight_in_grams(text: &str) -> i32 {
 // Normalize weight display (e.g., "250 grams" -> "250g", "1 kilogram" -> "1kg")
 fn normalize_weight(text: &str) -> String {
     let text_lower = text.to_lowercase();
+    let words: Vec<&str> = text_lower.split_whitespace().collect();
 
-    if let Some(captures) = regex::Regex::new(r"(\d+(?:\.\d+)?)\s*(g|gram|grams|kg|kilogram|kilograms)")
-        .ok()
-        .and_then(|re| re.captures(&text_lower))
-    {
-        if let Some(num) = captures.get(1).map(|m| m.as_str()) {
-            let unit = captures.get(2).map(|m| m.as_str()).unwrap_or("g");
-            let normalized_unit = if unit.starts_with("kg") || unit.starts_with("kilo") {
-                "kg"
-            } else {
-                "g"
-            };
-            return format!("{}{}", num, normalized_unit);
+    for i in 0..words.len() {
+        let word = words[i];
+
+        // Check if this word is a number
+        if let Ok(num) = word.parse::<f32>() {
+            // Check the next word for unit
+            if i + 1 < words.len() {
+                let next = words[i + 1];
+                if next.starts_with("kg") || next.starts_with("kilo") {
+                    return format!("{}kg", num);
+                } else if next.starts_with("g") || next.starts_with("gram") {
+                    return format!("{}g", num);
+                }
+            }
+        }
+
+        // Check if number and unit are in same word (e.g., "250g")
+        if let Some(pos) = word.find("kg") {
+            if let Ok(num) = word[..pos].parse::<f32>() {
+                return format!("{}kg", num);
+            }
+        } else if let Some(pos) = word.find('g') {
+            if let Ok(num) = word[..pos].parse::<f32>() {
+                return format!("{}g", num);
+            }
         }
     }
 
