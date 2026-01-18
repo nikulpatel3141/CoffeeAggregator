@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::{extract::State, routing::post, Router};
+use axum::{extract::State, routing::{get, post}, Router};
 use chrono::Utc;
 use firestore::FirestoreDb;
 use scraper::{Html, Selector};
@@ -29,23 +29,78 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    // Initialize logging first
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .with_thread_ids(false)
+        .with_file(false)
+        .init();
 
-    let project_id = std::env::var("GCP_PROJECT_ID")?;
-    let db = Arc::new(FirestoreDb::new(&project_id).await?);
+    info!("🚀 Coffee Scraper starting up...");
+
+    // Get GCP project ID with better error handling
+    let project_id = match std::env::var("GCP_PROJECT_ID") {
+        Ok(id) => {
+            info!("📊 Using GCP project: {}", id);
+            id
+        }
+        Err(_) => {
+            tracing::error!("❌ GCP_PROJECT_ID environment variable not set");
+            eprintln!("ERROR: GCP_PROJECT_ID environment variable is required but not set");
+            anyhow::bail!("GCP_PROJECT_ID environment variable not set");
+        }
+    };
+
+    info!("🔌 Connecting to Firestore...");
+    let db = match FirestoreDb::new(&project_id).await {
+        Ok(db) => {
+            info!("✅ Connected to Firestore successfully");
+            Arc::new(db)
+        }
+        Err(e) => {
+            tracing::error!("❌ Failed to connect to Firestore: {}", e);
+            eprintln!("ERROR: Failed to connect to Firestore: {}", e);
+            return Err(e.into());
+        }
+    };
 
     let state = AppState { db };
 
+    let port = std::env::var("PORT").unwrap_or_else(|_| {
+        info!("PORT env var not set, defaulting to 8080");
+        "8080".to_string()
+    });
+    let addr = format!("0.0.0.0:{}", port);
+
+    info!("📡 Attempting to bind to {}", addr);
+
+    let listener = match TcpListener::bind(&addr).await {
+        Ok(l) => {
+            info!("✅ Successfully bound to {}", l.local_addr()?);
+            l
+        }
+        Err(e) => {
+            tracing::error!("❌ Failed to bind to {}: {}", addr, e);
+            eprintln!("ERROR: Failed to bind to {}: {}", addr, e);
+            return Err(e.into());
+        }
+    };
+
+    info!("🔧 Setting up HTTP router...");
     let app = Router::new()
         .route("/", post(scrape_handler))
+        .route("/health", get(health_handler))
         .with_state(state);
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-    let listener = TcpListener::bind(&addr).await?;
-    info!("Starting server on {}", listener.local_addr()?);
+    info!("✅ Scraper service ready and listening on {}", listener.local_addr()?);
+    info!("🎯 Waiting for POST requests to trigger scraping...");
+    info!("💚 Health check available at /health");
 
-    axum::serve(listener, app).await?;
+    if let Err(e) = axum::serve(listener, app).await {
+        tracing::error!("❌ Server error: {}", e);
+        eprintln!("ERROR: Server error: {}", e);
+        return Err(e.into());
+    }
 
     Ok(())
 }
@@ -61,6 +116,10 @@ async fn scrape_handler(State(state): State<AppState>) -> &'static str {
             "ERROR"
         }
     }
+}
+
+async fn health_handler() -> &'static str {
+    "OK"
 }
 
 async fn run_scraper(db: &FirestoreDb) -> Result<()> {

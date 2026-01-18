@@ -1,7 +1,7 @@
 mod github_auth;
 
 use anyhow::Result;
-use axum::{routing::post, Router};
+use axum::{routing::{get, post}, Router};
 use chrono::Utc;
 use firestore::FirestoreDb;
 use serde::{Deserialize, Serialize};
@@ -32,16 +32,49 @@ struct BuildMetadata {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    // Initialize logging first
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .with_thread_ids(false)
+        .with_file(false)
+        .init();
 
-    let app = Router::new().route("/", post(build_handler));
+    info!("🚀 Coffee Builder starting up...");
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let port = std::env::var("PORT").unwrap_or_else(|_| {
+        info!("PORT env var not set, defaulting to 8080");
+        "8080".to_string()
+    });
     let addr = format!("0.0.0.0:{}", port);
-    let listener = TcpListener::bind(&addr).await?;
-    info!("Starting builder service on {}", listener.local_addr()?);
 
-    axum::serve(listener, app).await?;
+    info!("📡 Attempting to bind to {}", addr);
+
+    let listener = match TcpListener::bind(&addr).await {
+        Ok(l) => {
+            info!("✅ Successfully bound to {}", l.local_addr()?);
+            l
+        }
+        Err(e) => {
+            tracing::error!("❌ Failed to bind to {}: {}", addr, e);
+            eprintln!("ERROR: Failed to bind to {}: {}", addr, e);
+            return Err(e.into());
+        }
+    };
+
+    info!("🔧 Setting up HTTP router...");
+    let app = Router::new()
+        .route("/", post(build_handler))
+        .route("/health", get(health_handler));
+
+    info!("✅ Builder service ready and listening on {}", listener.local_addr()?);
+    info!("🎯 Waiting for POST requests to trigger builds...");
+    info!("💚 Health check available at /health");
+
+    if let Err(e) = axum::serve(listener, app).await {
+        tracing::error!("❌ Server error: {}", e);
+        eprintln!("ERROR: Server error: {}", e);
+        return Err(e.into());
+    }
 
     Ok(())
 }
@@ -57,6 +90,10 @@ async fn build_handler() -> &'static str {
             "ERROR"
         }
     }
+}
+
+async fn health_handler() -> &'static str {
+    "OK"
 }
 
 async fn run_build() -> Result<()> {

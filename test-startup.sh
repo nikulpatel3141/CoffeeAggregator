@@ -20,7 +20,8 @@ START_TIME=$(date +%s)
 
 # Try to connect for up to 30 seconds
 for i in {1..30}; do
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/ > /dev/null 2>&1; then
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/health 2>/dev/null || echo "000")
+    if [ "$HTTP_CODE" = "200" ]; then
         END_TIME=$(date +%s)
         ELAPSED=$((END_TIME - START_TIME))
         echo ""
