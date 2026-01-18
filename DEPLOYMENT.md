@@ -45,7 +45,7 @@ The Coffee Aggregator uses a static site architecture with automated data pipeli
    - Free tier: 5000 internal steps/month
 
 2. **Scraper** (GCP Cloud Run)
-   - Scrapes 8 UK coffee roasters
+   - Scrapes 10 UK coffee roasters
    - Stores data in Firestore
    - Triggered by workflow
 
@@ -114,10 +114,26 @@ Instead of using a Personal Access Token, we use GitHub Apps for better security
    git push -u origin build
    ```
 
-### 3. Terraform Infrastructure
+### 3. Build and Push Docker Images
+
+**IMPORTANT**: Build and push Docker images BEFORE running Terraform!
 
 ```bash
-cd terraform
+# Build and push scraper image
+cd scraper
+./build.sh $PROJECT_ID
+
+# Build and push builder image
+cd ../builder
+./build.sh $PROJECT_ID
+```
+
+### 4. Terraform Infrastructure
+
+Now that the Docker images exist in GCR, we can create the infrastructure:
+
+```bash
+cd ../terraform
 
 # Copy and configure variables
 cp terraform.tfvars.example terraform.tfvars
@@ -140,38 +156,13 @@ terraform apply
 
 This creates:
 - Firestore database
-- Cloud Run service for scraper
-- Cloud Run service for builder (with GitHub App authentication)
+- Cloud Run services for scraper and builder (using your Docker images)
 - Cloud Workflows pipeline (orchestrates scraper → builder)
 - Cloud Scheduler job (triggers workflow at 6 AM UK time)
 - Service accounts and IAM permissions
 - Secret Manager IAM bindings
 
-### 4. Build and Deploy Scraper
-
-```bash
-cd ../scraper
-
-# Build and push Docker image
-./build.sh $PROJECT_ID
-
-# The Cloud Run service will automatically use the latest image
-# Cloud Scheduler will trigger it daily at 6 AM UK time
-```
-
-### 5. Build and Deploy Builder
-
-```bash
-cd ../builder
-
-# Build and push Docker image
-./build.sh $PROJECT_ID
-
-# The Cloud Run service will automatically use the latest image
-# Cloud Scheduler will trigger it daily at 7 AM UK time
-```
-
-### 6. Deploy Frontend to Vercel
+### 5. Deploy Frontend to Vercel
 
 #### Option A: Vercel Dashboard (Recommended)
 
@@ -197,12 +188,12 @@ vercel login
 vercel --prod
 ```
 
-### 7. Configure Auto-Deployment
+### 6. Configure Auto-Deployment
 
 Vercel automatically redeploys when you push to GitHub. The workflow:
 
-1. **Daily 6 AM UK**: Scraper runs → updates Firestore
-2. **Daily 7 AM UK**: Builder runs → exports to JSON → commits to GitHub
+1. **Daily 6 AM UK**: Cloud Workflows triggers → Scraper runs → updates Firestore
+2. **Immediately after**: Builder runs → exports to JSON → commits to GitHub
 3. **Automatic**: GitHub commit → triggers Vercel deployment
 4. **~2 minutes later**: New data live on your site!
 

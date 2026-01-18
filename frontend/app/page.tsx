@@ -246,12 +246,8 @@ export default function Home() {
           <div className="flex justify-between items-start mb-4">
             <div>
               <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className="w-12 h-12">
-                  <path d="M16 24 L16 42 C16 48, 20 52, 26 52 L38 52 C44 52, 48 48, 48 42 L48 24 Z" fill="currentColor"/>
-                  <path d="M48 28 L52 28 C54 28, 56 30, 56 32 L56 36 C56 38, 54 40, 52 40 L48 40" fill="currentColor" opacity="0.7"/>
-                  <path d="M24 18 Q24 14, 26 14 Q28 14, 28 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
-                  <path d="M32 16 Q32 12, 34 12 Q36 12, 36 16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
-                  <path d="M40 18 Q40 14, 42 14 Q44 14, 44 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-12 h-12">
+                  <path d="M8 12 L8 20 C8 22, 10 24, 12 24 L20 24 C22 24, 24 22, 24 20 L24 12 Z" fill="currentColor"/>
                 </svg>
                 UK Specialty Coffee Tracker
               </h1>
@@ -316,7 +312,7 @@ export default function Home() {
         {activeTab === 'coffees' && (
           <>
             {/* Filters and Map Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-6 mb-6">
               {/* Left: Filters */}
               <CoffeeFilters
                 onFilterChange={setFilters}
