@@ -255,7 +255,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
             </div>
           </div>
 
-          {/* Add custom styles for range slider thumbs */}
+          {/* Minimal styles for range slider */}
           <style jsx>{`
             input[type="range"] {
               -webkit-appearance: none;
@@ -265,34 +265,27 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
             input[type="range"]::-webkit-slider-thumb {
               -webkit-appearance: none;
               appearance: none;
-              width: 18px;
-              height: 18px;
+              width: 16px;
+              height: 16px;
               border-radius: 50%;
               background: #d97706;
               cursor: pointer;
-              border: 2px solid white;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }
 
             input[type="range"]::-moz-range-thumb {
-              width: 18px;
-              height: 18px;
+              width: 16px;
+              height: 16px;
               border-radius: 50%;
               background: #d97706;
+              border: none;
               cursor: pointer;
-              border: 2px solid white;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }
 
             input[type="range"]::-webkit-slider-runnable-track {
-              width: 100%;
-              height: 8px;
               background: transparent;
             }
 
             input[type="range"]::-moz-range-track {
-              width: 100%;
-              height: 8px;
               background: transparent;
             }
           `}</style>
