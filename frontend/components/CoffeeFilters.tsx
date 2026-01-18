@@ -203,9 +203,21 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Price Range: £{filters.minPrice} - £{filters.maxPrice}
           </label>
-          <div className="px-1 pt-2 space-y-2">
-            <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400">Min: £{filters.minPrice}</label>
+          <div className="px-1 pt-6 pb-2">
+            <div className="relative h-2">
+              {/* Track background */}
+              <div className="absolute w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
+
+              {/* Active range highlight */}
+              <div
+                className="absolute h-2 bg-amber-600 rounded-lg"
+                style={{
+                  left: `${((filters.minPrice - minPrice) / (maxPrice - minPrice)) * 100}%`,
+                  right: `${100 - ((filters.maxPrice - minPrice) / (maxPrice - minPrice)) * 100}%`
+                }}
+              ></div>
+
+              {/* Min range input */}
               <input
                 type="range"
                 min={minPrice}
@@ -213,16 +225,17 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
                 value={filters.minPrice}
                 onChange={(e) => {
                   const newMin = parseFloat(e.target.value)
-                  // Ensure min doesn't exceed max
                   if (newMin <= filters.maxPrice) {
                     updateFilter('minPrice', newMin)
                   }
                 }}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
+                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto"
+                style={{
+                  zIndex: filters.minPrice > maxPrice - (maxPrice - minPrice) / 2 ? 5 : 3,
+                }}
               />
-            </div>
-            <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400">Max: £{filters.maxPrice}</label>
+
+              {/* Max range input */}
               <input
                 type="range"
                 min={minPrice}
@@ -230,15 +243,59 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
                 value={filters.maxPrice}
                 onChange={(e) => {
                   const newMax = parseFloat(e.target.value)
-                  // Ensure max doesn't go below min
                   if (newMax >= filters.minPrice) {
                     updateFilter('maxPrice', newMax)
                   }
                 }}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
+                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto"
+                style={{
+                  zIndex: 4,
+                }}
               />
             </div>
           </div>
+
+          {/* Add custom styles for range slider thumbs */}
+          <style jsx>{`
+            input[type="range"] {
+              -webkit-appearance: none;
+              appearance: none;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #d97706;
+              cursor: pointer;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            input[type="range"]::-moz-range-thumb {
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #d97706;
+              cursor: pointer;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            input[type="range"]::-webkit-slider-runnable-track {
+              width: 100%;
+              height: 8px;
+              background: transparent;
+            }
+
+            input[type="range"]::-moz-range-track {
+              width: 100%;
+              height: 8px;
+              background: transparent;
+            }
+          `}</style>
         </div>
 
         {/* Tasting Notes with Autocomplete */}
