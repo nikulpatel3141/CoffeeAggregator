@@ -66,7 +66,6 @@ export default function Home() {
   })
   const [activeTab, setActiveTab] = useState<'coffees' | 'subscriptions' | 'readme'>('coffees')
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [regionFilterCollapsed, setRegionFilterCollapsed] = useState(true)
 
   useEffect(() => {
     fetchCoffees()
@@ -198,13 +197,20 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-[1600px] mx-auto p-6">
         {/* Header */}
         <header className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2">
-                ☕ UK Specialty Coffee Tracker
+              <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className="w-12 h-12">
+                  <path d="M16 24 L16 42 C16 48, 20 52, 26 52 L38 52 C44 52, 48 48, 48 42 L48 24 Z" fill="currentColor"/>
+                  <path d="M48 28 L52 28 C54 28, 56 30, 56 32 L56 36 C56 38, 54 40, 52 40 L48 40" fill="currentColor" opacity="0.7"/>
+                  <path d="M24 18 Q24 14, 26 14 Q28 14, 28 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
+                  <path d="M32 16 Q32 12, 34 12 Q36 12, 36 16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
+                  <path d="M40 18 Q40 14, 42 14 Q44 14, 44 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
+                </svg>
+                UK Specialty Coffee Tracker
               </h1>
               <p className="text-gray-700 dark:text-gray-300 text-lg">
                 Discover specialty coffee from top UK roasters, visualized by origin region
@@ -275,8 +281,6 @@ export default function Home() {
                 regions={regions}
                 maxPrice={maxPrice}
                 tastingNotes={tastingNotes}
-                regionFilterCollapsed={regionFilterCollapsed}
-                onToggleRegionFilter={() => setRegionFilterCollapsed(!regionFilterCollapsed)}
               />
 
               {/* Right: Map */}

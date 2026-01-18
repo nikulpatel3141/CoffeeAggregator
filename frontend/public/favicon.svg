@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Simple coffee cup in amber brown -->
+  <path d="M16 24 L16 42 C16 48, 20 52, 26 52 L38 52 C44 52, 48 48, 48 42 L48 24 Z" fill="#d97706"/>
+  <path d="M48 28 L52 28 C54 28, 56 30, 56 32 L56 36 C56 38, 54 40, 52 40 L48 40" fill="#b45309"/>
+  <!-- Steam -->
+  <path d="M24 18 Q24 14, 26 14 Q28 14, 28 18" stroke="#92400e" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M32 16 Q32 12, 34 12 Q36 12, 36 16" stroke="#92400e" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M40 18 Q40 14, 42 14 Q44 14, 44 18" stroke="#92400e" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>

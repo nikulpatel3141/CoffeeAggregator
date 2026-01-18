@@ -8,8 +8,6 @@ interface FilterProps {
   regions: string[]
   maxPrice: number
   tastingNotes: string[]
-  regionFilterCollapsed: boolean
-  onToggleRegionFilter: () => void
 }
 
 export interface CoffeeFilterValues {
@@ -53,7 +51,7 @@ const getCountryFlag = (country: string): string => {
   return flagMap[country] || '🌍'
 }
 
-export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, tastingNotes, regionFilterCollapsed, onToggleRegionFilter }: FilterProps) {
+export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, tastingNotes }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
     roaster: '',
@@ -255,66 +253,52 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
 
       {/* Tags Section */}
       <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
-        <button
-          onClick={onToggleRegionFilter}
-          className="flex items-center justify-between w-full text-left"
-        >
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            🏷️ Quick Filter Tags
-          </span>
-          <svg
-            className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${regionFilterCollapsed ? '' : 'rotate-180'}`}
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
+        <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+          🏷️ Quick Filter Tags
+        </h3>
 
-        {!regionFilterCollapsed && (
-          <div className="mt-2 space-y-3">
-            {/* Origin Tags */}
-            <div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Origin</p>
-              <div className="flex flex-wrap gap-1.5">
-                {regions.map((region) => (
-                  <button
-                    key={region}
-                    onClick={() => updateFilter('region', filters.region === region ? '' : region)}
-                    className={`px-2 py-1 text-xs rounded-md transition-colors inline-flex items-center gap-1 ${
-                      filters.region === region
-                        ? 'bg-amber-600 text-white shadow-sm'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <span>{getCountryFlag(region)}</span>
-                    <span>{region}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Popular Tasting Notes Tags */}
-            <div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Popular Notes</p>
-              <div className="flex flex-wrap gap-1.5">
-                {tastingNotes.slice(0, 20).map((note) => (
-                  <button
-                    key={note}
-                    onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note, true)}
-                    className={`px-2 py-1 text-xs rounded-md transition-colors capitalize ${
-                      filters.tastingNotes === note
-                        ? 'bg-amber-600 text-white shadow-sm'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {note}
-                  </button>
-                ))}
-              </div>
+        <div className="space-y-3">
+          {/* Origin Tags */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Origin</p>
+            <div className="flex flex-wrap gap-1.5">
+              {regions.map((region) => (
+                <button
+                  key={region}
+                  onClick={() => updateFilter('region', filters.region === region ? '' : region)}
+                  className={`px-2 py-1 text-xs rounded-md transition-colors inline-flex items-center gap-1 ${
+                    filters.region === region
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <span>{getCountryFlag(region)}</span>
+                  <span>{region}</span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
+
+          {/* Popular Tasting Notes Tags */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Popular Notes</p>
+            <div className="flex flex-wrap gap-1.5">
+              {tastingNotes.slice(0, 20).map((note) => (
+                <button
+                  key={note}
+                  onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note, true)}
+                  className={`px-2 py-1 text-xs rounded-md transition-colors capitalize ${
+                    filters.tastingNotes === note
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {note}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
