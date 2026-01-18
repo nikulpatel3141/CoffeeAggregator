@@ -141,11 +141,12 @@ export default function Home() {
     }
   }
 
-  // Extract unique roasters, regions, max price, and tasting notes for filter dropdowns
-  const { roasters, regions, maxPrice, tastingNotes } = useMemo(() => {
+  // Extract unique roasters, regions, price range, and tasting notes for filter dropdowns
+  const { roasters, regions, minPrice, maxPrice, tastingNotes } = useMemo(() => {
     const roasterSet = new Set<string>()
     const regionSet = new Set<string>()
     const tastingNotesSet = new Set<string>()
+    let calculatedMinPrice = Infinity
     let calculatedMaxPrice = 0
 
     coffees.forEach((coffee) => {
@@ -158,11 +159,12 @@ export default function Home() {
         if (note) tastingNotesSet.add(note.toLowerCase())
       })
 
-      // Calculate max price
+      // Calculate min and max price
       if (coffee.price) {
         const price = parseFloat(coffee.price.replace(/[^0-9.]/g, ''))
-        if (!isNaN(price) && price > calculatedMaxPrice) {
-          calculatedMaxPrice = price
+        if (!isNaN(price)) {
+          if (price < calculatedMinPrice) calculatedMinPrice = price
+          if (price > calculatedMaxPrice) calculatedMaxPrice = price
         }
       }
     })
@@ -170,17 +172,18 @@ export default function Home() {
     return {
       roasters: Array.from(roasterSet).sort(),
       regions: Array.from(regionSet).sort(),
-      maxPrice: Math.ceil(calculatedMaxPrice) || 100, // Round up, default to 100 if no prices
+      minPrice: calculatedMinPrice === Infinity ? 0 : Math.floor(calculatedMinPrice),
+      maxPrice: Math.ceil(calculatedMaxPrice) || 100,
       tastingNotes: Array.from(tastingNotesSet).sort(),
     }
   }, [coffees])
 
-  // Update max price filter when data loads
+  // Update price filter when data loads
   useEffect(() => {
     if (maxPrice > 0 && filters.maxPrice === 0) {
-      setFilters(prev => ({ ...prev, maxPrice }))
+      setFilters(prev => ({ ...prev, minPrice, maxPrice }))
     }
-  }, [maxPrice])
+  }, [minPrice, maxPrice])
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode
@@ -319,6 +322,7 @@ export default function Home() {
                 onFilterChange={setFilters}
                 roasters={roasters}
                 regions={regions}
+                minPrice={minPrice}
                 maxPrice={maxPrice}
                 tastingNotes={tastingNotes}
               />

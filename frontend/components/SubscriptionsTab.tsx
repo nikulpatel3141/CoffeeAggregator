@@ -38,6 +38,12 @@ export default function SubscriptionsTab() {
       price: '£10.00',
       notes: 'Colombian specialty, direct trade',
     },
+    {
+      roaster: 'Monmouth Coffee',
+      url: 'https://www.monmouthcoffee.co.uk/product-category/our-coffee/coffee-subscriptions/',
+      price: '£9.50',
+      notes: 'Iconic London roaster, sustainably sourced',
+    },
   ]
 
   return (

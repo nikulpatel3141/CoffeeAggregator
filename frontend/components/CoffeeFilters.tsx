@@ -6,6 +6,7 @@ interface FilterProps {
   onFilterChange: (filters: CoffeeFilterValues) => void
   roasters: string[]
   regions: string[]
+  minPrice: number
   maxPrice: number
   tastingNotes: string[]
 }
@@ -51,12 +52,12 @@ const getCountryFlag = (country: string): string => {
   return flagMap[country] || '🌍'
 }
 
-export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPrice, tastingNotes }: FilterProps) {
+export default function CoffeeFilters({ onFilterChange, roasters, regions, minPrice, maxPrice, tastingNotes }: FilterProps) {
   const [filters, setFilters] = useState<CoffeeFilterValues>({
     search: '',
     roaster: '',
     region: '',
-    minPrice: 0,
+    minPrice: minPrice || 0,
     maxPrice: maxPrice || 100,
     tastingNotes: '',
   })
@@ -64,14 +65,14 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
 
-  // Update maxPrice when prop changes
+  // Update price range when props change
   useEffect(() => {
     if (maxPrice > 0 && filters.maxPrice === 0) {
-      const newFilters = { ...filters, maxPrice }
+      const newFilters = { ...filters, minPrice, maxPrice }
       setFilters(newFilters)
       onFilterChange(newFilters)
     }
-  }, [maxPrice])
+  }, [minPrice, maxPrice])
 
   const updateFilter = (key: keyof CoffeeFilterValues, value: string | number, suppressAutocomplete = false) => {
     const newFilters = { ...filters, [key]: value }
@@ -141,7 +142,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
       search: '',
       roaster: '',
       region: '',
-      minPrice: 0,
+      minPrice: minPrice,
       maxPrice: maxPrice,
       tastingNotes: '',
     }
@@ -202,15 +203,39 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, maxPr
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Price Range: £{filters.minPrice} - £{filters.maxPrice}
           </label>
-          <div className="px-1 pt-2">
-            <input
-              type="range"
-              min="0"
-              max={maxPrice}
-              value={filters.maxPrice}
-              onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
-            />
+          <div className="px-1 pt-2 space-y-2">
+            <div>
+              <label className="text-xs text-gray-500 dark:text-gray-400">Min: £{filters.minPrice}</label>
+              <input
+                type="range"
+                min={minPrice}
+                max={maxPrice}
+                value={filters.minPrice}
+                onChange={(e) => {
+                  const newMin = parseFloat(e.target.value)
+                  if (newMin <= filters.maxPrice) {
+                    updateFilter('minPrice', newMin)
+                  }
+                }}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 dark:text-gray-400">Max: £{filters.maxPrice}</label>
+              <input
+                type="range"
+                min={minPrice}
+                max={maxPrice}
+                value={filters.maxPrice}
+                onChange={(e) => {
+                  const newMax = parseFloat(e.target.value)
+                  if (newMax >= filters.minPrice) {
+                    updateFilter('maxPrice', newMax)
+                  }
+                }}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+            </div>
           </div>
         </div>
 
