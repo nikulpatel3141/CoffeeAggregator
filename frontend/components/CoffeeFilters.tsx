@@ -67,7 +67,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
 
   // Update price range when props change
   useEffect(() => {
-    if (maxPrice > 0 && filters.maxPrice === 0) {
+    if (maxPrice > 0 && (filters.maxPrice !== maxPrice || filters.minPrice !== minPrice)) {
       const newFilters = { ...filters, minPrice, maxPrice }
       setFilters(newFilters)
       onFilterChange(newFilters)
@@ -201,41 +201,17 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
         {/* Price Range */}
         <div className="md:col-span-2 lg:col-span-1">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Price Range: £{filters.minPrice} - £{filters.maxPrice}
+            Price Range: £{minPrice} - £{filters.maxPrice}
           </label>
-          <div className="px-1 pt-2 space-y-2">
-            <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Min: £{filters.minPrice}</label>
-              <input
-                type="range"
-                min={minPrice}
-                max={maxPrice}
-                value={filters.minPrice}
-                onChange={(e) => {
-                  const newMin = parseFloat(e.target.value)
-                  if (newMin <= filters.maxPrice) {
-                    updateFilter('minPrice', newMin)
-                  }
-                }}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Max: £{filters.maxPrice}</label>
-              <input
-                type="range"
-                min={minPrice}
-                max={maxPrice}
-                value={filters.maxPrice}
-                onChange={(e) => {
-                  const newMax = parseFloat(e.target.value)
-                  if (newMax >= filters.minPrice) {
-                    updateFilter('maxPrice', newMax)
-                  }
-                }}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
-              />
-            </div>
+          <div className="px-1 pt-2">
+            <input
+              type="range"
+              min={minPrice}
+              max={maxPrice}
+              value={filters.maxPrice}
+              onChange={(e) => updateFilter('maxPrice', parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-amber-600"
+            />
           </div>
         </div>
 
