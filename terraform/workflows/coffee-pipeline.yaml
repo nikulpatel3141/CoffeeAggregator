@@ -35,7 +35,7 @@ main:
         switch:
           - condition: $${scraper_response.code == 200}
             next: run_builder
-        next: scraper_failed
+        next: scraper_failed_log
 
     # Step 2: Run the builder
     - run_builder:
@@ -55,30 +55,36 @@ main:
     - check_builder_success:
         switch:
           - condition: $${builder_response.code == 200}
-            next: pipeline_success
-        next: builder_failed
+            next: pipeline_success_log
+        next: builder_failed_log
 
     # Success path
-    - pipeline_success:
+    - pipeline_success_log:
         call: sys.log
         args:
           text: "Pipeline completed successfully"
           severity: INFO
+
+    - pipeline_success:
         return: "SUCCESS"
 
     # Error paths
-    - scraper_failed:
+    - scraper_failed_log:
         call: sys.log
         args:
           text: "Scraper failed"
           severity: ERROR
+
+    - scraper_failed:
         raise:
           message: "Scraper failed"
 
-    - builder_failed:
+    - builder_failed_log:
         call: sys.log
         args:
           text: "Builder failed"
           severity: ERROR
+
+    - builder_failed:
         raise:
           message: "Builder failed"
