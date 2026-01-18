@@ -20,7 +20,7 @@ COPY src ./src
 # Build the actual application (only this rebuilds when source changes)
 RUN cargo build --release
 
-FROM debian:trixie-slim
+FROM ubuntu:24.04
 
 # Install git for repository operations
 RUN apt-get update && \
