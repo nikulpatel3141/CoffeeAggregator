@@ -14,10 +14,16 @@ gcloud iam service-accounts create github-actions \
   --display-name="GitHub Actions CI/CD" \
   --project=$PROJECT_ID
 
-# Grant necessary permissions
+# Grant minimal necessary permissions for GCR
+# storage.objectCreator: Create new objects (push images)
+# storage.objectViewer: View objects (check existing layers)
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
+  --role="roles/storage.objectCreator"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/storage.objectViewer"
 
 # Create and download service account key
 gcloud iam service-accounts keys create github-actions-key.json \
@@ -154,7 +160,7 @@ gcloud container images describe gcr.io/$PROJECT_ID/coffee-builder:latest
 
 **Solution**:
 1. Verify `GCP_SA_KEY` secret contains the full JSON
-2. Check service account has `roles/storage.admin`
+2. Check service account has `roles/storage.objectCreator` and `roles/storage.objectViewer`
 3. Re-create the service account key if needed
 
 ### Error: "Permission denied" when pushing to GCR
@@ -165,7 +171,11 @@ gcloud container images describe gcr.io/$PROJECT_ID/coffee-builder:latest
 ```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
+  --role="roles/storage.objectCreator"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/storage.objectViewer"
 ```
 
 ### Workflow doesn't trigger

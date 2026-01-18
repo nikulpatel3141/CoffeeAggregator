@@ -13,6 +13,7 @@ interface Coffee {
   region?: string
   tasting_notes: string[]
   price?: string
+  weight?: string
   url: string
   in_stock: boolean
   scraped_at: string
@@ -444,7 +445,9 @@ export default function Home() {
                           </div>
                         )}
                         {coffee.price && (
-                          <p className="text-base font-bold text-amber-600 dark:text-amber-400 mb-2">{coffee.price}</p>
+                          <p className="text-base font-bold text-amber-600 dark:text-amber-400 mb-2">
+                            {coffee.price}{coffee.weight && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/ {coffee.weight}</span>}
+                          </p>
                         )}
                         <div className="flex gap-2 items-center">
                           <a
@@ -504,7 +507,9 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-3">
                           {coffee.price && (
-                            <p className="text-base font-bold text-amber-600 dark:text-amber-400 min-w-[60px] text-right">{coffee.price}</p>
+                            <p className="text-base font-bold text-amber-600 dark:text-amber-400 min-w-[80px] text-right">
+                              {coffee.price}{coffee.weight && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/ {coffee.weight}</span>}
+                            </p>
                           )}
                           <a
                             href={coffee.url}

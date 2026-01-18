@@ -16,6 +16,7 @@ struct Coffee {
     region: Option<String>,
     tasting_notes: Vec<String>,
     price: Option<String>,
+    weight: Option<String>,  // e.g., "250g", "1kg"
     url: String,
     in_stock: bool,
     scraped_at: String,
@@ -110,6 +111,106 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     Ok(())
 }
 
+// Helper function to select the best variant (prefer 250g, otherwise smallest weight)
+fn select_best_variant(variants: &Vec<serde_json::Value>) -> (Option<String>, Option<String>) {
+    if variants.is_empty() {
+        return (None, None);
+    }
+
+    #[derive(Debug)]
+    struct VariantInfo {
+        price: String,
+        weight: String,
+        weight_grams: i32,
+    }
+
+    let mut variant_infos = Vec::new();
+
+    for variant in variants {
+        let price = variant.get("price")
+            .and_then(|p| p.as_str())
+            .map(|p| format!("£{}", p));
+
+        // Extract weight from title, option1, option2, or option3
+        let weight_str = variant.get("title")
+            .and_then(|t| t.as_str())
+            .or_else(|| variant.get("option1").and_then(|o| o.as_str()))
+            .or_else(|| variant.get("option2").and_then(|o| o.as_str()))
+            .or_else(|| variant.get("option3").and_then(|o| o.as_str()))
+            .unwrap_or("");
+
+        // Parse weight in grams
+        let weight_grams = extract_weight_in_grams(weight_str);
+
+        if let Some(p) = price {
+            variant_infos.push(VariantInfo {
+                price: p,
+                weight: weight_str.to_string(),
+                weight_grams,
+            });
+        }
+    }
+
+    if variant_infos.is_empty() {
+        return (None, None);
+    }
+
+    // Prefer 250g variant
+    if let Some(preferred) = variant_infos.iter().find(|v| v.weight_grams == 250) {
+        return (Some(preferred.price.clone()), Some(normalize_weight(&preferred.weight)));
+    }
+
+    // Otherwise, select smallest weight
+    variant_infos.sort_by_key(|v| v.weight_grams);
+    let smallest = &variant_infos[0];
+    (Some(smallest.price.clone()), Some(normalize_weight(&smallest.weight)))
+}
+
+// Extract weight in grams from variant title/option
+fn extract_weight_in_grams(text: &str) -> i32 {
+    let text_lower = text.to_lowercase();
+
+    // Match patterns like "250g", "250 g", "1kg", "1 kg"
+    if let Some(captures) = regex::Regex::new(r"(\d+(?:\.\d+)?)\s*(g|kg)")
+        .ok()
+        .and_then(|re| re.captures(&text_lower))
+    {
+        if let Some(num) = captures.get(1).and_then(|m| m.as_str().parse::<f32>().ok()) {
+            let unit = captures.get(2).map(|m| m.as_str()).unwrap_or("g");
+            return if unit == "kg" {
+                (num * 1000.0) as i32
+            } else {
+                num as i32
+            };
+        }
+    }
+
+    // Default to a large value so it's not preferred
+    999999
+}
+
+// Normalize weight display (e.g., "250 grams" -> "250g", "1 kilogram" -> "1kg")
+fn normalize_weight(text: &str) -> String {
+    let text_lower = text.to_lowercase();
+
+    if let Some(captures) = regex::Regex::new(r"(\d+(?:\.\d+)?)\s*(g|gram|grams|kg|kilogram|kilograms)")
+        .ok()
+        .and_then(|re| re.captures(&text_lower))
+    {
+        if let Some(num) = captures.get(1).map(|m| m.as_str()) {
+            let unit = captures.get(2).map(|m| m.as_str()).unwrap_or("g");
+            let normalized_unit = if unit.starts_with("kg") || unit.starts_with("kilo") {
+                "kg"
+            } else {
+                "g"
+            };
+            return format!("{}{}", num, normalized_unit);
+        }
+    }
+
+    text.to_string()
+}
+
 // Generic Shopify JSON API scraper - more reliable than HTML scraping
 async fn scrape_shopify_json(
     json_url: &str,
@@ -154,12 +255,12 @@ async fn scrape_shopify_json(
                 continue;
             }
 
-            let price = product.get("variants")
-                .and_then(|v| v.as_array())
-                .and_then(|arr| arr.first())
-                .and_then(|v| v.get("price"))
-                .and_then(|p| p.as_str())
-                .map(|p| format!("£{}", p));
+            // Extract best variant (prefer 250g, otherwise smallest weight)
+            let (price, weight) = if let Some(variants) = product.get("variants").and_then(|v| v.as_array()) {
+                select_best_variant(variants)
+            } else {
+                (None, None)
+            };
 
             let product_url = product.get("handle")
                 .and_then(|h| h.as_str())
@@ -181,6 +282,7 @@ async fn scrape_shopify_json(
                 region,
                 tasting_notes: Vec::new(),
                 price,
+                weight,
                 url: product_url,
                 in_stock: true,
                 scraped_at: Utc::now().to_rfc3339(),
@@ -361,6 +463,7 @@ async fn scrape_shopify_store(
                     region,
                     tasting_notes: Vec::new(),
                     price,
+                    weight: None,  // HTML scraping doesn't extract weight reliably
                     url: product_url,
                     in_stock: true,
                     scraped_at: Utc::now().to_rfc3339(),
