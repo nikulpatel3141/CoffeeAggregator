@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let mut successful_scrapers = 0;
     let mut failed_scrapers = Vec::new();
 
-    // Test all 9 roasters
+    // Test all 12 roasters
     let roasters = vec![
         ("Origin Coffee", "https://www.origincoffee.co.uk/collections/coffee"),
         ("Rave Coffee", "https://ravecoffee.co.uk/collections/coffee"),
@@ -22,6 +22,9 @@ async fn main() -> Result<()> {
         ("Balance Coffee", "https://balancecoffee.co.uk/collections/speciality-coffee"),
         ("Union Coffee", "https://unionroasted.com/collections/single-origins"),
         ("Hermanos Coffee", "https://hermanoscoffeeroasters.com/collections/all"),
+        ("Monmouth Coffee", "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/"),
+        ("Gotham Coffee", "https://gothamcoffee.com/collections/arabica-origin-coffee"),
+        ("Coffee Compass", "https://www.coffeecompass.co.uk/collections/roasted-origin-coffee"),
     ];
 
     for (name, url) in roasters {
@@ -47,7 +50,7 @@ async fn main() -> Result<()> {
 
     println!("\n═══════════════════════════════════════════════");
     println!("📊 Results Summary:");
-    println!("  ✅ Successful: {}/9 roasters", successful_scrapers);
+    println!("  ✅ Successful: {}/12 roasters", successful_scrapers);
     println!("  📦 Total products: {}", total_coffees);
     println!("  📈 Average: {:.1} products/roaster", total_coffees as f32 / successful_scrapers.max(1) as f32);
 
