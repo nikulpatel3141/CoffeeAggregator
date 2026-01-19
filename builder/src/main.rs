@@ -193,6 +193,8 @@ async fn setup_git_repo(github_token: &str, repo_url: &str, target_branch: &str)
 
         // Pull latest changes from target branch
         let output = Command::new("git")
+            .env("GIT_TERMINAL_PROMPT", "0")
+            .env("GIT_ASKPASS", "echo")
             .args(&["pull", "origin", target_branch])
             .output()?;
 
@@ -217,6 +219,8 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
 
     // Clone with specific branch if it exists, otherwise clone and create branch
     let output = Command::new("git")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_ASKPASS", "echo")
         .args(&["clone", "--branch", target_branch, &auth_url, repo_path])
         .output()?;
 
@@ -224,6 +228,8 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
         // Branch might not exist, try cloning without branch and create it
         info!("Branch {} not found, cloning default branch and creating it", target_branch);
         let output = Command::new("git")
+            .env("GIT_TERMINAL_PROMPT", "0")
+            .env("GIT_ASKPASS", "echo")
             .args(&["clone", &auth_url, repo_path])
             .output()?;
 
@@ -329,7 +335,9 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
     // Push to GitHub
     info!("Pushing to branch: {}", target_branch);
     let output = Command::new("git")
-        .args(&["push", "origin", target_branch])
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_ASKPASS", "echo")
+        .args(&["push", "-u", "origin", target_branch])
         .output()?;
 
     if !output.status.success() {
