@@ -91,15 +91,6 @@ resource "google_cloud_run_service_iam_member" "public_access" {
   member   = "allUsers"
 }
 
-# Allow public access to builder for testing
-# TODO: Remove this in production, builder should only be invoked by workflow
-resource "google_cloud_run_service_iam_member" "builder_public_access" {
-  service  = google_cloud_run_service.builder.name
-  location = google_cloud_run_service.builder.location
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
-
 # Service account for Cloud Scheduler
 resource "google_service_account" "scheduler" {
   account_id   = "coffee-scheduler"
