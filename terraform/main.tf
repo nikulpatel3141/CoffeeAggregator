@@ -21,8 +21,10 @@ resource "google_firestore_database" "coffee_db" {
 
 # Cloud Storage bucket for scraper deployment
 resource "google_storage_bucket" "scraper_bucket" {
-  name     = "${var.project_id}-coffee-scraper"
-  location = var.region
+  name                        = "${var.project_id}-coffee-scraper"
+  location                    = var.region
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
 }
 
 # Service account for scraper
@@ -78,17 +80,9 @@ resource "google_cloud_run_service" "scraper" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress" = "all"
+      "run.googleapis.com/ingress" = "internal"
     }
   }
-}
-
-# Allow unauthenticated access to the API endpoints
-resource "google_cloud_run_service_iam_member" "public_access" {
-  service  = google_cloud_run_service.scraper.name
-  location = google_cloud_run_service.scraper.location
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }
 
 # Service account for Cloud Scheduler
