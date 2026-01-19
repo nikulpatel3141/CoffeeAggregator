@@ -31,6 +31,15 @@ resource "google_cloud_run_service" "scraper" {
   location = var.region
 
   template {
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/maxScale" = "10"
+        "run.googleapis.com/client-name"   = "terraform"
+        # Change this value to force a new deployment
+        "deployment-version" = "v2"
+      }
+    }
+
     spec {
       containers {
         image = "gcr.io/${var.project_id}/coffee-scraper:latest"
@@ -119,6 +128,15 @@ resource "google_cloud_run_service" "builder" {
   location = var.region
 
   template {
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/maxScale" = "10"
+        "run.googleapis.com/client-name"   = "terraform"
+        # Change this value to force a new deployment
+        "deployment-version" = "v2"
+      }
+    }
+
     spec {
       service_account_name = google_service_account.builder.email
 
