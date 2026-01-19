@@ -25,6 +25,19 @@ resource "google_storage_bucket" "scraper_bucket" {
   location = var.region
 }
 
+# Service account for scraper
+resource "google_service_account" "scraper" {
+  account_id   = "coffee-scraper"
+  display_name = "Coffee Scraper Service"
+}
+
+# Grant scraper service account Firestore access
+resource "google_project_iam_member" "scraper_datastore" {
+  project = var.project_id
+  role    = "roles/datastore.user"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
 # Cloud Run service for scraper and API
 resource "google_cloud_run_service" "scraper" {
   name     = "coffee-scraper"
@@ -41,6 +54,8 @@ resource "google_cloud_run_service" "scraper" {
     }
 
     spec {
+      service_account_name = google_service_account.scraper.email
+
       containers {
         image = "gcr.io/${var.project_id}/coffee-scraper:latest"
 
@@ -101,6 +116,13 @@ data "google_secret_manager_secret" "github_app_private_key" {
 resource "google_service_account" "builder" {
   account_id   = "coffee-builder"
   display_name = "Coffee Builder Service"
+}
+
+# Grant builder service account Firestore access
+resource "google_project_iam_member" "builder_datastore" {
+  project = var.project_id
+  role    = "roles/datastore.user"
+  member  = "serviceAccount:${google_service_account.builder.email}"
 }
 
 # Grant builder service account access to secrets
