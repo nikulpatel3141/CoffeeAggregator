@@ -214,8 +214,9 @@ async fn setup_git_repo(github_token: &str, repo_url: &str, target_branch: &str)
 async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_branch: &str) -> Result<()> {
     info!("Cloning repository (branch: {})", target_branch);
 
-    // Use token for authentication
-    let auth_url = format!("https://{}@{}", github_token, repo_url);
+    // Use token for authentication with proper GitHub format
+    // GitHub requires: https://x-access-token:TOKEN@github.com/...
+    let auth_url = format!("https://x-access-token:{}@{}", github_token, repo_url);
 
     // Clone with specific branch if it exists, otherwise clone and create branch
     let output = Command::new("git")
