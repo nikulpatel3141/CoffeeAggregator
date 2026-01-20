@@ -2,9 +2,9 @@ project_id    = "your-gcp-project-id"
 region        = "europe-west2"
 
 # GitHub repository configuration
-# Use the same repo with a build branch, or a separate repo like CoffeeAggregatorWebsite
-repo_url      = "github.com/nikulpatel3141/CoffeeAggregator"
-target_branch = "build"
+# Using a separate repo for Vercel deployment (keeps main repo private)
+repo_url      = "github.com/nikulpatel3141/CoffeeAggregatorWebsite"
+target_branch = "main"
 
 # Note: GitHub App credentials are stored in Secret Manager, not here!
 # See GITHUB_APP_SETUP.md for instructions on setting up GitHub App authentication

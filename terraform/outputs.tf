@@ -23,8 +23,7 @@ output "deployment_info" {
   value = <<-EOT
     Pipeline runs daily at 6 AM UK time via Cloud Workflows
     Workflow: coffee-pipeline (Scraper -> Builder)
-    Target branch: ${var.target_branch}
-    Repository: ${var.repo_url}
+    Build output: ${var.repo_url} (branch: ${var.target_branch})
 
     GitHub App authentication (no PAT required!)
     Secrets stored in Secret Manager:

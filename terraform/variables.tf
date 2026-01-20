@@ -12,13 +12,13 @@ variable "region" {
 variable "repo_url" {
   description = "GitHub repository URL (format: github.com/username/repo)"
   type        = string
-  default     = "github.com/nikulpatel3141/CoffeeAggregator"
+  default     = "github.com/nikulpatel3141/CoffeeAggregatorWebsite"
 }
 
 variable "target_branch" {
   description = "Git branch to push build artifacts to"
   type        = string
-  default     = "build"
+  default     = "main"
 }
 
 # GitHub App credentials (stored in Secret Manager, not here!)
