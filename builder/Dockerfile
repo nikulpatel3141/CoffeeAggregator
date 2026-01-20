@@ -31,9 +31,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/coffee-builder /app/coffee-builder
 
-# Copy frontend source code to be deployed
-COPY ../frontend /app/frontend-source
-
 ENV PORT=8080
 
 CMD ["/app/coffee-builder"]
