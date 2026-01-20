@@ -301,9 +301,9 @@ async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
 }
 
 async fn commit_and_push(target_branch: &str) -> Result<()> {
-    // Add changes
+    // Add all frontend changes (entire Next.js app + data)
     let output = Command::new("git")
-        .args(&["add", "frontend/public/data/"])
+        .args(&["add", "frontend/"])
         .output()?;
 
     if !output.status.success() {
