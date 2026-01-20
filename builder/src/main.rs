@@ -100,7 +100,7 @@ async fn run_build() -> Result<()> {
     info!("Starting static site build");
 
     let project_id = std::env::var("GCP_PROJECT_ID")?;
-    let repo_url = std::env::var("REPO_URL")?; // e.g., "github.com/user/repo"
+    let website_repo_url = std::env::var("REPO_URL")?; // Website deployment repo
     let target_branch = std::env::var("TARGET_BRANCH").unwrap_or_else(|_| "main".to_string());
 
     // Generate GitHub App installation token
@@ -131,15 +131,24 @@ async fn run_build() -> Result<()> {
 
     info!("Found {} coffees", coffees.len());
 
-    // Clone or update the repository
-    info!("Setting up Git repository");
-    setup_git_repo(&github_token, &repo_url, &target_branch).await?;
+    // Clone main repo to get frontend source
+    info!("Cloning main repository for frontend source");
+    let source_repo = "github.com/nikulpatel3141/CoffeeAggregator";
+    clone_source_repo(&github_token, source_repo).await?;
+
+    // Clone or update the website deployment repository
+    info!("Setting up website deployment repository");
+    setup_git_repo(&github_token, &website_repo_url, &target_branch).await?;
+
+    // Copy frontend source from main repo to website repo
+    info!("Copying frontend source code");
+    copy_frontend_to_website().await?;
 
     // Export data to JSON files
     info!("Exporting data to JSON");
     export_to_json(&coffees).await?;
 
-    // Commit and push to GitHub
+    // Commit and push to website repo
     info!("Committing and pushing to GitHub");
     commit_and_push(&target_branch).await?;
 
@@ -263,6 +272,68 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
     Ok(())
 }
 
+async fn clone_source_repo(github_token: &str, repo_url: &str) -> Result<()> {
+    let source_path = "/tmp/coffee-source-repo";
+    let auth_url = format!("https://x-access-token:{}@{}", github_token, repo_url);
+
+    // Remove if exists
+    if std::path::Path::new(source_path).exists() {
+        std::fs::remove_dir_all(source_path)?;
+    }
+
+    // Clone the main repo
+    let output = Command::new("git")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_ASKPASS", "echo")
+        .args(&["clone", &auth_url, source_path])
+        .output()?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "Failed to clone source repository: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    info!("Source repository cloned successfully");
+    Ok(())
+}
+
+async fn copy_frontend_to_website() -> Result<()> {
+    let source = "/tmp/coffee-source-repo/frontend";
+    let dest = "/tmp/coffee-tracker-repo/frontend";
+
+    // Remove existing frontend directory if it exists
+    if std::path::Path::new(&dest).exists() {
+        std::fs::remove_dir_all(&dest)?;
+    }
+
+    // Copy entire frontend directory
+    copy_dir_all(source, dest)?;
+
+    info!("Frontend source copied to website repo");
+    Ok(())
+}
+
+fn copy_dir_all(src: impl AsRef<std::path::Path>, dst: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+    std::fs::create_dir_all(&dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dst_path = dst.as_ref().join(entry.file_name());
+        if ty.is_dir() {
+            // Skip node_modules and .next directories
+            if entry.file_name() == "node_modules" || entry.file_name() == ".next" {
+                continue;
+            }
+            copy_dir_all(entry.path(), dst_path)?;
+        } else {
+            std::fs::copy(entry.path(), dst_path)?;
+        }
+    }
+    Ok(())
+}
+
 async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
     let data_dir = "/tmp/coffee-tracker-repo/frontend/public/data";
     std::fs::create_dir_all(data_dir)?;
@@ -301,6 +372,9 @@ async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
 }
 
 async fn commit_and_push(target_branch: &str) -> Result<()> {
+    // Ensure we're in the website repo directory
+    std::env::set_current_dir("/tmp/coffee-tracker-repo")?;
+
     // Add all frontend changes (entire Next.js app + data)
     let output = Command::new("git")
         .args(&["add", "frontend/"])
@@ -321,7 +395,7 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
     }
 
     // Commit changes
-    let commit_msg = format!("Update coffee data - {}", Utc::now().format("%Y-%m-%d %H:%M UTC"));
+    let commit_msg = format!("Update frontend and coffee data - {}", Utc::now().format("%Y-%m-%d %H:%M UTC"));
     let output = Command::new("git")
         .args(&["commit", "-m", &commit_msg])
         .output()?;
