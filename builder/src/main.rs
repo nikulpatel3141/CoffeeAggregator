@@ -135,6 +135,10 @@ async fn run_build() -> Result<()> {
     info!("Setting up Git repository");
     setup_git_repo(&github_token, &repo_url, &target_branch).await?;
 
+    // Copy frontend source code to the repository
+    info!("Copying frontend source code");
+    copy_frontend_source().await?;
+
     // Export data to JSON files
     info!("Exporting data to JSON");
     export_to_json(&coffees).await?;
@@ -260,6 +264,41 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
         .args(&["config", "user.email", "bot@coffeeaggregator.com"])
         .output()?;
 
+    Ok(())
+}
+
+async fn copy_frontend_source() -> Result<()> {
+    let source = "/app/frontend-source";
+    let dest = "/tmp/coffee-tracker-repo/frontend";
+
+    // Remove existing frontend directory if it exists
+    if std::path::Path::new(&dest).exists() {
+        std::fs::remove_dir_all(&dest)?;
+    }
+
+    // Copy entire frontend directory
+    copy_dir_all(source, dest)?;
+
+    info!("Frontend source code copied successfully");
+    Ok(())
+}
+
+fn copy_dir_all(src: impl AsRef<std::path::Path>, dst: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+    std::fs::create_dir_all(&dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dst_path = dst.as_ref().join(entry.file_name());
+        if ty.is_dir() {
+            // Skip node_modules and .next directories to save space
+            if entry.file_name() == "node_modules" || entry.file_name() == ".next" {
+                continue;
+            }
+            copy_dir_all(entry.path(), dst_path)?;
+        } else {
+            std::fs::copy(entry.path(), dst_path)?;
+        }
+    }
     Ok(())
 }
 
