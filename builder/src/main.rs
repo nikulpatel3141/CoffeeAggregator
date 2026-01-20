@@ -301,25 +301,6 @@ async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
 }
 
 async fn commit_and_push(target_branch: &str) -> Result<()> {
-    // Get the GitHub token and repo URL from environment to update remote URL
-    let github_token = if let (Ok(app_id), Ok(installation_id), Ok(private_key)) = (
-        std::env::var("GITHUB_APP_ID"),
-        std::env::var("GITHUB_APP_INSTALLATION_ID"),
-        std::env::var("GITHUB_APP_PRIVATE_KEY"),
-    ) {
-        github_auth::get_github_token(&app_id, &installation_id, &private_key).await?
-    } else {
-        std::env::var("GITHUB_TOKEN")?
-    };
-
-    let repo_url = std::env::var("REPO_URL")?;
-    let auth_url = format!("https://x-access-token:{}@{}", github_token, repo_url);
-
-    // Update the remote URL with authentication
-    Command::new("git")
-        .args(&["remote", "set-url", "origin", &auth_url])
-        .output()?;
-
     // Add changes
     let output = Command::new("git")
         .args(&["add", "frontend/public/data/"])
