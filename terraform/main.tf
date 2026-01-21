@@ -251,6 +251,13 @@ resource "google_cloud_run_service_iam_member" "workflow_builder_invoker" {
   member   = "serviceAccount:${google_service_account.workflow.email}"
 }
 
+# Grant workflow service account logging permissions
+resource "google_project_iam_member" "workflow_logging" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.workflow.email}"
+}
+
 # Cloud Workflows - Orchestrates scraper -> builder pipeline
 resource "google_workflows_workflow" "coffee_pipeline" {
   name            = "coffee-pipeline"
