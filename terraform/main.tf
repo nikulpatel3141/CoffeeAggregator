@@ -12,6 +12,12 @@ provider "google" {
   region  = var.region
 }
 
+# Enable required APIs
+resource "google_project_service" "logging" {
+  service            = "logging.googleapis.com"
+  disable_on_destroy = false
+}
+
 # Firestore database
 resource "google_firestore_database" "coffee_db" {
   name        = "(default)"
