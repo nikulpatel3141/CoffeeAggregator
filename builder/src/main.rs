@@ -375,6 +375,15 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
     // Ensure we're in the website repo directory
     std::env::set_current_dir("/tmp/coffee-tracker-repo")?;
 
+    // Configure git user for commits
+    Command::new("git")
+        .args(&["config", "user.name", "Coffee Aggregator Bot"])
+        .output()?;
+
+    Command::new("git")
+        .args(&["config", "user.email", "bot@coffeeaggregator.com"])
+        .output()?;
+
     // Add all frontend changes (entire Next.js app + data)
     let output = Command::new("git")
         .args(&["add", "frontend/"])
