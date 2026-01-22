@@ -134,7 +134,8 @@ async fn run_build() -> Result<()> {
     // Clone main repo to get frontend source
     info!("Cloning main repository for frontend source");
     let source_repo = "github.com/nikulpatel3141/CoffeeAggregator";
-    clone_source_repo(&github_token, source_repo).await?;
+    let source_branch = "main"; // Clone from main branch
+    clone_source_repo(&github_token, source_repo, source_branch).await?;
 
     // Clone or update the website deployment repository
     info!("Setting up website deployment repository");
@@ -272,7 +273,7 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
     Ok(())
 }
 
-async fn clone_source_repo(github_token: &str, repo_url: &str) -> Result<()> {
+async fn clone_source_repo(github_token: &str, repo_url: &str, branch: &str) -> Result<()> {
     let source_path = "/tmp/coffee-source-repo";
     let auth_url = format!("https://x-access-token:{}@{}", github_token, repo_url);
 
@@ -281,11 +282,11 @@ async fn clone_source_repo(github_token: &str, repo_url: &str) -> Result<()> {
         std::fs::remove_dir_all(source_path)?;
     }
 
-    // Clone the main repo
+    // Clone the main repo with specific branch
     let output = Command::new("git")
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GIT_ASKPASS", "echo")
-        .args(&["clone", &auth_url, source_path])
+        .args(&["clone", "--branch", branch, &auth_url, source_path])
         .output()?;
 
     if !output.status.success() {
