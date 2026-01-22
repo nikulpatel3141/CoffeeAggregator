@@ -72,6 +72,14 @@ cd ../frontend
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local and add the API URL from terraform output api_url
+
+# Build the frontend
+npm run build
+npm run export
+
 # Deploy to Cloud Storage
 ./deploy.sh $PROJECT_ID
 ```
@@ -127,10 +135,31 @@ npm run dev
 # Visit http://localhost:3000
 ```
 
+## API Endpoints
+
+The scraper service also provides a REST API:
+
+- `GET /api/coffees` - Fetch all coffees (supports query params: roaster, region, min_price, max_price)
+- `GET /api/health` - Health check endpoint
+- `POST /` - Trigger manual scrape (authenticated via Cloud Scheduler)
+
+Example:
+```bash
+curl "https://your-service-url/api/coffees?roaster=Pact%20Coffee&min_price=10&max_price=20"
+```
+
+## Frontend Features
+
+- **Map View**: Interactive world map showing coffee origins with clusters
+- **List View**: Traditional card-based layout
+- **Filters**: Search, roaster, region, price range, and tasting notes
+- **Responsive Design**: Works on mobile and desktop
+
 ## Notes
 
-- The scraper includes placeholder implementations for coffee roasters
-- You'll need to inspect actual websites and update CSS selectors
-- Consider adding more UK specialty coffee roasters
+- The scraper includes implementations for 8 UK specialty coffee roasters
+- CSS selectors may need updates if roaster websites change their structure
 - The Firestore database is in native mode for better querying
 - All infrastructure uses GCP free tier where possible
+- The API is publicly accessible to allow the static frontend to fetch data
+- CORS is enabled on the Cloud Run service for cross-origin requests

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Light background for contrast -->
+  <circle cx="16" cy="16" r="15" fill="#fef3c7"/>
+
+  <!-- Coffee cup -->
+  <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="#92400e"/>
+  <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="#78350f"/>
+
+  <!-- Cup handle -->
+  <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="#92400e" stroke-width="1.5" fill="none"/>
+
+  <!-- Steam wisps -->
+  <path d="M12 11 Q12 9, 13 9" stroke="#92400e" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M16 10 Q16 8, 17 8" stroke="#92400e" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M20 11 Q20 9, 21 9" stroke="#92400e" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>

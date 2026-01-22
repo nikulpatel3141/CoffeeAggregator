@@ -1,0 +1,43 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scraper/**'
+      - 'builder/**'
+      - '.github/workflows/build-images.yml'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: Build and push scraper
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/coffee-scraper:latest ./scraper
+          docker push gcr.io/$PROJECT_ID/coffee-scraper:latest
+
+      - name: Build and push builder
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/coffee-builder:latest ./builder
+          docker push gcr.io/$PROJECT_ID/coffee-builder:latest
