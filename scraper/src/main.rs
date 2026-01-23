@@ -150,13 +150,53 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     }
 
-    // Store in Firestore
+    // Filter coffees by price (max £50)
+    all_coffees.retain(|coffee| {
+        if let Some(price_str) = &coffee.price {
+            // Extract numeric price from string like "£12.50"
+            let numeric_price = price_str
+                .trim_start_matches('£')
+                .trim()
+                .parse::<f64>()
+                .unwrap_or(0.0);
+            numeric_price > 0.0 && numeric_price <= 50.0
+        } else {
+            false // Filter out coffees without prices
+        }
+    });
+
+    info!("Filtered to {} coffees under £50", all_coffees.len());
+
+    // Clear existing coffees from Firestore
+    info!("Clearing old coffee data from Firestore");
+    let existing_coffees: Vec<String> = db
+        .fluent()
+        .select()
+        .from("coffees")
+        .obj()
+        .query()
+        .await?
+        .into_iter()
+        .filter_map(|(doc_id, _): (String, Coffee)| Some(doc_id))
+        .collect();
+
+    for doc_id in existing_coffees {
+        db.fluent()
+            .delete()
+            .from("coffees")
+            .document_id(&doc_id)
+            .execute()
+            .await?;
+    }
+
+    info!("Deleted {} old documents", existing_coffees.len());
+
+    // Store new coffees in Firestore
     for coffee in all_coffees {
         let doc_id = format!(
-            "{}_{}_{}",
-            coffee.roaster.replace(" ", "_"),
-            coffee.name.replace(" ", "_"),
-            Utc::now().timestamp()
+            "{}_{}",
+            coffee.roaster.replace(" ", "_").replace("/", "_"),
+            coffee.name.replace(" ", "_").replace("/", "_")
         );
 
         db.fluent()
