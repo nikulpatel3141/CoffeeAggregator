@@ -185,29 +185,43 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     // Step 0: Clear any leftover staging data from previous runs
     info!("Clearing staging collection from previous runs");
-    let old_staging_docs: Vec<String> = db
+    let old_staging_result = db
         .fluent()
         .select()
         .from("coffees_staging")
         .obj()
         .query()
-        .await
-        .unwrap_or_default()
-        .into_iter()
-        .map(|(doc_id, _): (String, Coffee)| doc_id)
-        .collect();
+        .await;
 
-    if !old_staging_docs.is_empty() {
-        info!("Deleting {} old staging documents", old_staging_docs.len());
-        for doc_id in old_staging_docs {
-            let _ = db.fluent()
-                .delete()
-                .from("coffees_staging")
-                .document_id(&doc_id)
-                .execute()
-                .await;
+    match old_staging_result {
+        Ok(old_staging_docs) => {
+            let doc_ids: Vec<String> = old_staging_docs
+                .into_iter()
+                .map(|(doc_id, _): (String, Coffee)| doc_id)
+                .collect();
+
+            if !doc_ids.is_empty() {
+                info!("Deleting {} old staging documents", doc_ids.len());
+                for doc_id in doc_ids {
+                    if let Err(e) = db.fluent()
+                        .delete()
+                        .from("coffees_staging")
+                        .document_id(&doc_id)
+                        .execute()
+                        .await
+                    {
+                        tracing::error!("Failed to delete staging doc {}: {}", doc_id, e);
+                    }
+                }
+                info!("Cleared old staging data");
+            } else {
+                info!("No old staging data to clear");
+            }
         }
-        info!("Cleared old staging data");
+        Err(e) => {
+            // If staging collection doesn't exist yet, that's fine
+            info!("Staging collection doesn't exist or is empty: {}", e);
+        }
     }
 
     // Step 1: Write all coffees to staging collection
