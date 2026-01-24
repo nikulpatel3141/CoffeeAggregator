@@ -267,7 +267,7 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
         .output()?;
 
     Command::new("git")
-        .args(&["config", "user.email", "noreply@github.com"])
+        .args(&["config", "user.email", "nikulpatel3141@users.noreply.github.com"])
         .output()?;
 
     Ok(())
@@ -382,7 +382,7 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
         .output()?;
 
     Command::new("git")
-        .args(&["config", "user.email", "noreply@github.com"])
+        .args(&["config", "user.email", "nikulpatel3141@users.noreply.github.com"])
         .output()?;
 
     // Add all frontend changes (entire Next.js app + data)
