@@ -229,9 +229,10 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
                     updateFilter('minPrice', newMin)
                   }
                 }}
-                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto"
+                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer"
                 style={{
-                  zIndex: filters.minPrice > maxPrice - (maxPrice - minPrice) / 2 ? 5 : 3,
+                  zIndex: 5,
+                  pointerEvents: 'all'
                 }}
               />
 
@@ -247,9 +248,10 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
                     updateFilter('maxPrice', newMax)
                   }
                 }}
-                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer pointer-events-auto"
+                className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer"
                 style={{
                   zIndex: 4,
+                  pointerEvents: 'all'
                 }}
               />
             </div>

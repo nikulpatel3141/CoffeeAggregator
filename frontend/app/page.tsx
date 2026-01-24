@@ -107,6 +107,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'coffees' | 'subscriptions' | 'readme'>('coffees')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
 
   useEffect(() => {
     fetchCoffees()
@@ -237,8 +239,28 @@ export default function Home() {
       }
 
       return true
+    }).sort((a, b) => {
+      // Prioritize coffees with more complete metadata
+      const aScore = (a.origin ? 2 : 0) + (a.region ? 1 : 0) + (a.tasting_notes.length > 0 ? 2 : 0)
+      const bScore = (b.origin ? 2 : 0) + (b.region ? 1 : 0) + (b.tasting_notes.length > 0 : 2 : 0)
+      if (aScore !== bScore) return bScore - aScore
+      // Then alphabetically by name
+      return a.name.localeCompare(b.name)
     })
   }, [coffees, filters])
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filters])
+
+  // Paginated coffees
+  const paginatedCoffees = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return filteredCoffees.slice(startIndex, startIndex + itemsPerPage)
+  }, [filteredCoffees, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(filteredCoffees.length / itemsPerPage)
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
@@ -337,25 +359,86 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            {/* Coffee Count and View Toggle */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-400">
-                All Coffees
-              </h2>
-              <div className="flex items-center gap-4">
-                <p className="text-gray-700 dark:text-gray-300">
-                  Showing <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> of{' '}
-                  <span className="font-semibold text-amber-700 dark:text-amber-400">{coffees.length}</span> coffees
+            {/* Coffee Count, Pagination Controls, and View Toggle */}
+            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-400">
+                  All Coffees
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
+                  <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
+                  ({coffees.length} total)
                 </p>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Items per page selector */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="itemsPerPage" className="text-sm text-gray-700 dark:text-gray-300">
+                    Per page:
+                  </label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="p-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={filteredCoffees.length}>All</option>
+                  </select>
+                </div>
+                
+                {/* Pagination buttons */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="First page"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="Previous page"
+                    >
+                      Prev
+                    </button>
+                    <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="Next page"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="Last page"
+                    >
+                      Last
+                    </button>
+                  </div>
+                )}
+                
+                {/* View toggle */}
                 <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                   <button
                     onClick={() => setViewMode('card')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'card'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm'
-                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
+                    className={'p-2 rounded transition-colors ' + (viewMode === 'card' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
                     aria-label="Card view"
                   >
                     <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,11 +447,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'list'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm'
-                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
+                    className={'p-2 rounded transition-colors ' + (viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
                     aria-label="List view"
                   >
                     <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,7 +457,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
             {/* Loading State */}
             {loading && (
               <div className="text-center py-12">
@@ -412,7 +490,7 @@ export default function Home() {
                 ) : viewMode === 'card' ? (
                   /* Card View */
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredCoffees.map((coffee, index) => (
+                    {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
@@ -469,7 +547,7 @@ export default function Home() {
                 ) : (
                   /* List View */
                   <div className="space-y-2">
-                    {filteredCoffees.map((coffee, index) => (
+                    {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
                         className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow border border-transparent dark:border-gray-700 flex items-center gap-4"
