@@ -1,27 +1,10 @@
-mod github_auth;
-
 use anyhow::Result;
-use axum::{routing::{get, post}, Router};
 use chrono::Utc;
+use coffee_common::Coffee;
 use firestore::FirestoreDb;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::process::Command;
-use tokio::net::TcpListener;
 use tracing::info;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Coffee {
-    name: String,
-    roaster: String,
-    origin: Option<String>,
-    region: Option<String>,
-    tasting_notes: Vec<String>,
-    price: Option<String>,
-    weight: Option<String>,  // e.g., "250g", "1kg"
-    url: String,
-    in_stock: bool,
-    scraped_at: String,
-}
 
 #[derive(Serialize)]
 struct BuildMetadata {
@@ -32,90 +15,30 @@ struct BuildMetadata {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize logging first
+    // Initialize logging
     tracing_subscriber::fmt()
         .with_target(false)
         .with_thread_ids(false)
         .with_file(false)
         .init();
 
-    info!("🚀 Coffee Builder starting up...");
+    info!("🚀 Coffee Builder starting...");
 
-    let port = std::env::var("PORT").unwrap_or_else(|_| {
-        info!("PORT env var not set, defaulting to 8080");
-        "8080".to_string()
-    });
-    let addr = format!("0.0.0.0:{}", port);
+    // Run the builder
+    run_build().await?;
 
-    info!("📡 Attempting to bind to {}", addr);
-
-    let listener = match TcpListener::bind(&addr).await {
-        Ok(l) => {
-            info!("✅ Successfully bound to {}", l.local_addr()?);
-            l
-        }
-        Err(e) => {
-            tracing::error!("❌ Failed to bind to {}: {}", addr, e);
-            eprintln!("ERROR: Failed to bind to {}: {}", addr, e);
-            return Err(e.into());
-        }
-    };
-
-    info!("🔧 Setting up HTTP router...");
-    let app = Router::new()
-        .route("/", post(build_handler))
-        .route("/health", get(health_handler));
-
-    info!("✅ Builder service ready and listening on {}", listener.local_addr()?);
-    info!("🎯 Waiting for POST requests to trigger builds...");
-    info!("💚 Health check available at /health");
-
-    if let Err(e) = axum::serve(listener, app).await {
-        tracing::error!("❌ Server error: {}", e);
-        eprintln!("ERROR: Server error: {}", e);
-        return Err(e.into());
-    }
+    info!("✅ Build completed successfully");
 
     Ok(())
-}
-
-async fn build_handler() -> &'static str {
-    match run_build().await {
-        Ok(_) => {
-            info!("Build completed successfully");
-            "OK"
-        }
-        Err(e) => {
-            tracing::error!("Build failed: {}", e);
-            "ERROR"
-        }
-    }
-}
-
-async fn health_handler() -> &'static str {
-    "OK"
 }
 
 async fn run_build() -> Result<()> {
     info!("Starting static site build");
 
     let project_id = std::env::var("GCP_PROJECT_ID")?;
-    let website_repo_url = std::env::var("REPO_URL")?; // Website deployment repo
+    let website_repo_url = std::env::var("REPO_URL")?;
     let target_branch = std::env::var("TARGET_BRANCH").unwrap_or_else(|_| "main".to_string());
-
-    // Generate GitHub App installation token
-    info!("Authenticating with GitHub App");
-    let github_token = if let (Ok(app_id), Ok(installation_id), Ok(private_key)) = (
-        std::env::var("GITHUB_APP_ID"),
-        std::env::var("GITHUB_APP_INSTALLATION_ID"),
-        std::env::var("GITHUB_APP_PRIVATE_KEY"),
-    ) {
-        github_auth::get_github_token(&app_id, &installation_id, &private_key).await?
-    } else {
-        // Fallback to PAT for backward compatibility (will be removed)
-        info!("GitHub App credentials not found, falling back to GITHUB_TOKEN");
-        std::env::var("GITHUB_TOKEN")?
-    };
+    let github_token = std::env::var("GITHUB_TOKEN")?;
 
     let db = FirestoreDb::new(&project_id).await?;
 
