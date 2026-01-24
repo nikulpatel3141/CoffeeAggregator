@@ -36,7 +36,7 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           echo "🚀 Starting coffee scraper..."
-          cargo run --release
+          cargo run --release --bin coffee-scraper
           echo "✅ Scraping complete"
 
   build:
