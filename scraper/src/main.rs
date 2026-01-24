@@ -180,6 +180,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         .filter_map(|(doc_id, _): (String, Coffee)| Some(doc_id))
         .collect();
 
+    let old_count = existing_coffees.len();
+
     for doc_id in existing_coffees {
         db.fluent()
             .delete()
@@ -189,7 +191,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
             .await?;
     }
 
-    info!("Deleted {} old documents", existing_coffees.len());
+    info!("Deleted {} old documents", old_count);
 
     // Store new coffees in Firestore
     for coffee in all_coffees {
