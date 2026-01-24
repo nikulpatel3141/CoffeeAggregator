@@ -1,293 +1,354 @@
-# CI/CD Setup Guide
+# Coffee Aggregator Setup Guide
 
-This guide explains how to set up automatic Docker image builds using GitHub Actions.
+This guide explains how to set up the Coffee Aggregator application with automated daily scraping and deployment.
+
+## Architecture Overview
+
+```
+┌──────────────────────────────────────────────────────┐
+│              GitHub Actions                           │
+│                                                       │
+│  Daily at 6 AM UK (or manual trigger)                │
+│                                                       │
+│  Job 1: Scrape  ──────────▶  Job 2: Build           │
+│  - Run scraper Rust code    - Run builder Rust code  │
+│  - Write to Firestore       - Read from Firestore    │
+│                             - Push to website repo    │
+└───────────────────────┬───────────────────────────────┘
+                        │
+                        ▼
+              ┌──────────────────┐
+              │  GCP Firestore   │  (Database)
+              └──────────────────┘
+                        │
+                        ▼
+          ┌─────────────────────────┐
+          │  CoffeeAggregatorWebsite │  (GitHub Repo)
+          └────────────┬─────────────┘
+                       │
+                       ▼
+                ┌─────────────┐
+                │   Vercel    │  (Hosting)
+                └─────────────┘
+```
 
 ## Quick Start
 
-### Step 1: Create Terraform State Bucket
+### Step 1: Set Up GCP Infrastructure
 
 ```bash
 export PROJECT_ID="coffee-aggregator-project"  # Replace with your project ID
 
-# Create bucket for Terraform state storage (required for CI/CD)
-gsutil mb -p $PROJECT_ID -l europe-west2 gs://coffee-aggregator-terraform-state
+# Navigate to terraform directory
+cd terraform
 
-# Enable versioning for state file safety
-gsutil versioning set on gs://coffee-aggregator-terraform-state
+# Initialize Terraform
+terraform init
+
+# Review the plan
+terraform plan -var="project_id=$PROJECT_ID"
+
+# Apply the configuration (creates Firestore + service account)
+terraform apply -var="project_id=$PROJECT_ID"
 ```
 
-### Step 2: Create GCP Service Account
+This creates:
+- Firestore database (for storing coffee data)
+- Service account `github-actions-coffee@PROJECT_ID.iam.gserviceaccount.com` with Firestore access
+
+### Step 2: Create Service Account Key
 
 ```bash
-# Create service account
-gcloud iam service-accounts create github-actions \
-  --display-name="GitHub Actions CI/CD" \
-  --project=$PROJECT_ID
-
-# Grant necessary permissions for GCR and Terraform
-# storage.objectCreator: Create new objects (push images)
-# storage.objectViewer: View objects (check existing layers)
-# run.admin: Manage Cloud Run services (for Terraform)
-# iam.serviceAccountUser: Use service accounts (for Cloud Run)
-# workflows.admin: Manage Cloud Workflows (for Terraform)
-# cloudscheduler.admin: Manage Cloud Scheduler (for Terraform)
-# secretmanager.viewer: View secrets (for Terraform state)
-
-# Storage permissions (for Docker images)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.objectCreator"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.objectViewer"
-
-# Artifact Registry permissions (for Docker images - newer GCP service)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/artifactregistry.writer"
-
-# Cloud Run permissions (for Terraform deployments)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/run.admin"
-
-# IAM permissions (to assign service accounts to Cloud Run)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountUser"
-
-# Workflows permissions
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/workflows.admin"
-
-# Cloud Scheduler permissions
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/cloudscheduler.admin"
-
-# Firestore permissions
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/datastore.owner"
-
-# Service Account Admin (to create/manage service accounts)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountAdmin"
-
-# Secret Manager permissions
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.viewer"
-
-# Service Usage permissions (to enable APIs)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/serviceusage.serviceUsageAdmin"
-
-# Create and download service account key
+# Create and download service account key for GitHub Actions
 gcloud iam service-accounts keys create github-actions-key.json \
-  --iam-account=github-actions@${PROJECT_ID}.iam.gserviceaccount.com
+  --iam-account=github-actions-coffee@${PROJECT_ID}.iam.gserviceaccount.com
+
+# Display the key (you'll need this for GitHub Secrets)
+cat github-actions-key.json
 ```
 
-### Step 3: Add GitHub Repository Secrets
+### Step 3: Create GitHub Personal Access Token
 
-1. Go to your GitHub repository
+1. Go to https://github.com/settings/tokens/new
+2. Select scopes:
+   - ✅ `repo` (Full control of private repositories)
+3. Click **Generate token**
+4. Copy the token (starts with `ghp_...`)
+
+### Step 4: Add GitHub Repository Secrets
+
+1. Go to your GitHub repository: https://github.com/nikulpatel3141/CoffeeAggregator
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
-4. Add these two secrets:
+4. Add these three secrets:
 
-**Secret 1:**
+**Secret 1: GCP_PROJECT_ID**
 - Name: `GCP_PROJECT_ID`
 - Value: `coffee-aggregator-project` (your actual project ID)
 
-**Secret 2:**
+**Secret 2: GCP_SA_KEY**
 - Name: `GCP_SA_KEY`
-- Value: The entire contents of `github-actions-key.json`
-  ```bash
-  cat github-actions-key.json
-  # Copy the entire output
-  ```
+- Value: The entire contents of `github-actions-key.json` (copy everything including braces)
 
-### Step 4: Initialize Terraform with Remote State
+**Secret 3: GITHUB_PAT**
+- Name: `GITHUB_PAT`
+- Value: Your GitHub Personal Access Token from Step 3
 
-```bash
-cd terraform
+### Step 5: Test the Workflow
 
-# Initialize Terraform with the GCS backend
-terraform init
+**Manual Test:**
+1. Go to **Actions** tab in your GitHub repository
+2. Click **Coffee Scraper & Builder Pipeline**
+3. Click **Run workflow** → **Run workflow**
+4. Watch the workflow run (takes ~5-10 minutes)
 
-# If you have existing local state, migrate it:
-# terraform init -migrate-state
+**Verify:**
+- Job 1 (Scrape) should complete successfully
+- Job 2 (Build) should run after scrape completes
+- Check https://github.com/nikulpatel3141/CoffeeAggregatorWebsite for new commits
+- Check https://coffee-aggregator-website.vercel.app/ for updated coffees
+
+### Step 6: Schedule Runs Automatically
+
+The workflow is already configured to run daily at 6 AM UK time. No additional setup needed!
+
+The schedule is defined in `.github/workflows/scraper-builder-pipeline.yml`:
+```yaml
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 6 AM UTC (6 AM UK in winter, 5 AM UK in summer)
 ```
-
-### Step 5: Initial Manual Build (Required!)
-
-**IMPORTANT**: You must build the images manually once before Terraform can work:
-
-```bash
-# Authenticate with GCP
-gcloud auth configure-docker
-
-# Build and push scraper
-cd scraper
-./build.sh $PROJECT_ID
-
-# Build and push builder
-cd ../builder
-./build.sh $PROJECT_ID
-```
-
-This creates the initial images in Google Container Registry.
-
-### Step 6: Run Terraform
-
-Now that the images exist, you can run Terraform:
-
-```bash
-cd terraform
-terraform apply
-```
-
-### Step 7: Push to Main Branch
-
-After the initial setup, pushing any changes to `main` branch will automatically:
-1. Build updated Docker images
-2. Push them to GCR
-3. Automatically bump deployment versions in Terraform
-4. Run `terraform apply` to deploy the new versions
-5. Commit the version bump back to the repository
 
 ## How It Works
 
-The GitHub Actions workflow (`.github/workflows/build-images.yml`) automatically runs when you:
-- Push to the `main` branch
-- Modify files in `scraper/**`, `builder/**`, or `terraform/**`
-- Update the workflow file itself
+### Daily Workflow
 
-The workflow:
-1. Checks out your code
-2. Authenticates with GCP using the service account key
-3. Builds both Docker images
-4. Pushes them to Google Container Registry with the `latest` tag
-5. **Automatically bumps deployment versions** (v8 → v9, etc.)
-6. Runs `terraform init` and `terraform apply`
-7. Commits the version bump back to main branch
-8. Cloud Run picks up the new images with the bumped version
+1. **6 AM UK Time**: GitHub Actions automatically triggers the workflow
+2. **Scrape Job**:
+   - Checks out code
+   - Installs Rust
+   - Runs scraper (`cargo run --release` in `scraper/`)
+   - Scraper fetches coffee data from roaster websites
+   - Writes data to Firestore (using staging collection pattern for safety)
+3. **Build Job** (runs after scrape):
+   - Checks out code
+   - Installs Rust
+   - Runs builder (`cargo run --release` in `builder/`)
+   - Reads coffee data from Firestore
+   - Generates JSON files
+   - Commits and pushes to CoffeeAggregatorWebsite repo
+4. **Vercel Deployment**:
+   - Detects new commit in website repo
+   - Automatically builds and deploys the frontend
+   - Site updates with fresh coffee data
 
-## Workflow Triggers
+### What Gets Scraped
 
-The workflow runs on:
-```yaml
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'scraper/**'
-      - 'builder/**'
-      - 'terraform/**'
-      - '.github/workflows/build-images.yml'
-```
+Currently configured roasters:
+- **HasBean Coffee** - Specialty coffee from Stafford
+- **Square Mile Coffee** - London-based specialty roaster
+- **Curve Roasters** - Margate specialty roaster
+- **Origin Coffee** - Cornwall specialty roaster
 
-This means:
-- ✅ Changes to scraper code → triggers build and deploy
-- ✅ Changes to builder code → triggers build and deploy
-- ✅ Changes to terraform files → triggers deploy
-- ✅ Changes to workflow → triggers build and deploy
-- ❌ Changes only to frontend → does NOT trigger workflow
-- ❌ Changes only to README files → does NOT trigger workflow
+Filters applied:
+- ✅ Maximum price: £50
+- ✅ Excludes: bundles, subscriptions, samples, tasters
+- ✅ Only in-stock items
 
-**Important**: When terraform files change without code changes, the workflow will:
-- Skip building Docker images (they haven't changed)
-- Still run `terraform apply` to deploy infrastructure changes
+### Data Safety
 
-## Viewing Build Status
+The scraper uses a **staging collection pattern**:
+1. Scrapes all coffee data
+2. Writes to `coffees_staging` collection
+3. Only if successful: deletes `coffees` collection
+4. Copies staging → production
+5. Clears staging
 
-1. Go to your repository → **Actions** tab
-2. Click on the latest workflow run
-3. View the "Build and Push Images" job
-4. Check logs for each step
+This ensures you always have data even if scraping fails mid-way.
 
-## Manual Workflow Trigger
+## Manual Operations
 
-You can also trigger the workflow manually:
-1. Go to **Actions** tab
-2. Select "Build and Push Docker Images"
-3. Click **Run workflow**
-4. Select branch and click **Run workflow**
-
-## Verifying Images in GCR
+### Run Scraper Manually
 
 ```bash
-# List all images
-gcloud container images list --repository=gcr.io/$PROJECT_ID
+cd scraper
 
-# Check image details
-gcloud container images describe gcr.io/$PROJECT_ID/coffee-scraper:latest
-gcloud container images describe gcr.io/$PROJECT_ID/coffee-builder:latest
+# Set environment variable
+export GCP_PROJECT_ID="coffee-aggregator-project"
+
+# Run the scraper
+cargo run --release
+```
+
+### Run Builder Manually
+
+```bash
+cd builder
+
+# Set environment variables
+export GCP_PROJECT_ID="coffee-aggregator-project"
+export REPO_URL="github.com/nikulpatel3141/CoffeeAggregatorWebsite"
+export TARGET_BRANCH="main"
+export GITHUB_TOKEN="your-github-pat"
+
+# Run the builder
+cargo run --release
+```
+
+### View Firestore Data
+
+```bash
+# List collections
+gcloud firestore collections list --project=$PROJECT_ID
+
+# Export data (requires Cloud Storage bucket)
+gcloud firestore export gs://BUCKET_NAME --project=$PROJECT_ID
 ```
 
 ## Troubleshooting
 
-### Error: "Image not found" when running Terraform
+### Workflow fails with "GCP_PROJECT_ID not set"
 
-**Problem**: Terraform tries to create Cloud Run services but the Docker images don't exist yet.
-
-**Solution**: Build images manually first (Step 3 above), then run Terraform.
-
-### Error: "Authentication failed" in GitHub Actions
-
-**Problem**: GCP service account key is incorrect or missing permissions.
+**Problem**: GitHub secret not configured correctly
 
 **Solution**:
-1. Verify `GCP_SA_KEY` secret contains the full JSON
-2. Check service account has `roles/storage.objectCreator` and `roles/storage.objectViewer`
-3. Re-create the service account key if needed
+1. Go to **Settings** → **Secrets and variables** → **Actions**
+2. Verify `GCP_PROJECT_ID` exists and has correct value
+3. Re-run workflow
 
-### Error: "Permission denied" when pushing to GCR
+### Workflow fails with "Permission denied" accessing Firestore
 
-**Problem**: Service account lacks permissions.
+**Problem**: Service account lacks Firestore permissions
 
 **Solution**:
 ```bash
+# Grant Firestore access
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.objectCreator"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.objectViewer"
+  --member="serviceAccount:github-actions-coffee@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/datastore.user"
 ```
 
-### Workflow doesn't trigger
+### Build job fails to push to website repo
 
-**Problem**: Changes pushed to wrong branch or wrong directory.
+**Problem**: GitHub PAT is invalid or lacks permissions
 
-**Solution**: Ensure:
-- Pushing to `main` branch
-- Modified files are in `scraper/`, `builder/`, or workflow file
+**Solution**:
+1. Create a new Personal Access Token with `repo` scope
+2. Update `GITHUB_PAT` secret in repository settings
+3. Re-run workflow
+
+### No coffees appearing on website
+
+**Problem**: Data in `coffees_staging` but not in `coffees` collection
+
+**Solution**:
+```bash
+# Check Firestore collections
+gcloud firestore collections list --project=$PROJECT_ID
+
+# If only staging exists, manually trigger workflow to retry
+# Or manually copy data using Firestore console
+```
+
+### Workflow uses too many GitHub Actions minutes
+
+**Problem**: Workflow runs longer than expected
+
+**Current Usage**: ~10-15 minutes per run = ~300-450 minutes/month (well within 2000 free minutes)
+
+**If needed**:
+- Reduce frequency: Change cron to weekly (`0 6 * * 1` = Mondays only)
+- Use caching (already enabled via `Swatinem/rust-cache@v2`)
+
+## Cost Breakdown
+
+| Service | Usage | Cost |
+|---------|-------|------|
+| **GitHub Actions** | ~300-450 min/month | **Free** (2000/month free tier) |
+| **GCP Firestore** | <1GB, <1M reads/month | **Free** (free tier) |
+| **Vercel** | 100 deployments/month | **Free** (hobby plan) |
+
+**Total: $0/month** 🎉
+
+## Modifying the Schedule
+
+Edit `.github/workflows/scraper-builder-pipeline.yml`:
+
+```yaml
+on:
+  schedule:
+    # Examples:
+    - cron: '0 6 * * *'     # Daily at 6 AM UTC
+    - cron: '0 6 * * 1'     # Mondays only at 6 AM UTC
+    - cron: '0 6 * * 1,4'   # Mondays and Thursdays at 6 AM UTC
+    - cron: '0 */6 * * *'   # Every 6 hours
+```
+
+Commit and push changes to activate the new schedule.
+
+## Adding New Roasters
+
+1. Edit `scraper/src/main.rs`
+2. Add new scraper function (follow existing patterns like `scrape_hasbean`)
+3. Add to `all_coffees` vector in `scrape_all` function
+4. Test locally:
+   ```bash
+   cd scraper
+   cargo run --release
+   ```
+5. Commit and push - workflow will auto-deploy
 
 ## Security Notes
 
-- The service account key grants access to push Docker images
-- Keep `github-actions-key.json` secure and **never commit it to git**
-- The key is stored as an encrypted GitHub secret
-- Consider rotating the key periodically
-- For production, use Workload Identity Federation instead (more secure but complex)
+- ✅ Service account has minimal permissions (Firestore access only)
+- ✅ GitHub secrets are encrypted at rest
+- ✅ Personal Access Token scoped to `repo` only
+- ✅ All resources are private (no public endpoints)
+- ✅ Firestore has security rules (configure via console if needed)
+
+**Best Practices**:
+- Rotate GitHub PAT every 90 days
+- Rotate service account key annually
+- Never commit `github-actions-key.json` to git (in `.gitignore`)
+- Review Firestore data periodically
 
 ## Cleanup
 
-To delete the service account:
+To tear down the infrastructure:
 
 ```bash
-# Delete the service account
-gcloud iam service-accounts delete \
-  github-actions@${PROJECT_ID}.iam.gserviceaccount.com \
-  --project=$PROJECT_ID
+# Delete Terraform-managed resources
+cd terraform
+terraform destroy -var="project_id=$PROJECT_ID"
 
-# Delete local key file
+# Delete service account key
 rm github-actions-key.json
+
+# Revoke GitHub Personal Access Token
+# Go to https://github.com/settings/tokens and click "Delete"
 ```
+
+## Support
+
+- View workflow logs: **Actions** tab in GitHub repository
+- View Firestore data: https://console.cloud.google.com/firestore
+- Check website: https://coffee-aggregator-website.vercel.app/
+- Check Vercel deployments: https://vercel.com/dashboard
+
+## Migration from Cloud Run Architecture
+
+If you're migrating from the previous Cloud Run + Cloud Workflows architecture:
+
+1. **Terraform will destroy old resources**: Cloud Run services, Cloud Workflows, Cloud Scheduler, storage buckets, and 4 service accounts
+2. **Run `terraform plan` first** to review what will be deleted
+3. **Backup data if needed**:
+   ```bash
+   gcloud firestore export gs://backup-bucket --project=$PROJECT_ID
+   ```
+4. **Apply new configuration**:
+   ```bash
+   terraform apply -var="project_id=$PROJECT_ID"
+   ```
+5. **Old GitHub Actions workflow** (`.github/workflows/build-images.yml`) is no longer used and can be deleted
+
+The new architecture is **70% simpler** with only 1 GCP service (Firestore) instead of 6.
