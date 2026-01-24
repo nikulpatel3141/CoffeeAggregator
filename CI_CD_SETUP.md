@@ -69,11 +69,28 @@ cat github-actions-key.json
 
 ### Step 3: Create GitHub Personal Access Token
 
+**Option A: Fine-grained token (Recommended - Most Secure)**
+
+1. Go to https://github.com/settings/personal-access-tokens/new
+2. Configure:
+   - **Token name**: `coffee-aggregator-builder`
+   - **Expiration**: 90 days (or custom)
+   - **Repository access**: Only select repositories → `CoffeeAggregatorWebsite`
+   - **Repository permissions**:
+     - Contents: **Read and write** (for pushing commits)
+3. Click **Generate token**
+4. Copy the token (starts with `github_pat_...`)
+
+**Option B: Classic token (Simpler)**
+
 1. Go to https://github.com/settings/tokens/new
 2. Select scopes:
-   - ✅ `repo` (Full control of private repositories)
+   - ✅ `public_repo` (if CoffeeAggregatorWebsite is public)
+   - ✅ OR `repo` (if CoffeeAggregatorWebsite is private)
 3. Click **Generate token**
 4. Copy the token (starts with `ghp_...`)
+
+**Note**: Fine-grained tokens are more secure as they limit access to just the website repo.
 
 ### Step 4: Add GitHub Repository Secrets
 
