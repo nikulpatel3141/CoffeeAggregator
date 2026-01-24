@@ -178,38 +178,15 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     info!("After price filtering: {} coffees under £50", all_coffees.len());
 
-    // Clear ALL existing coffees from Firestore
-    info!("Clearing ALL coffee data from Firestore");
-    let all_docs: Vec<String> = db
-        .fluent()
-        .select()
-        .from("coffees")
-        .obj()
-        .query()
-        .await?
-        .into_iter()
-        .map(|(doc_id, _): (String, Coffee)| doc_id)
-        .collect();
-
-    info!("Found {} existing documents to delete", all_docs.len());
-
-    // Delete in batches for better performance
-    for doc_id in all_docs {
-        if let Err(e) = db.fluent()
-            .delete()
-            .from("coffees")
-            .document_id(&doc_id)
-            .execute()
-            .await
-        {
-            tracing::warn!("Failed to delete document {}: {}", doc_id, e);
-        }
+    if all_coffees.is_empty() {
+        tracing::error!("No coffees scraped! Aborting to preserve existing data");
+        anyhow::bail!("No coffees scraped - not overwriting existing data");
     }
 
-    info!("Cleared all old documents");
+    // Step 1: Write all coffees to staging collection
+    info!("Writing {} coffees to staging collection", all_coffees.len());
+    let mut insert_errors = 0;
 
-    // Store new coffees in Firestore
-    info!("Inserting {} new coffees", all_coffees.len());
     for (index, coffee) in all_coffees.iter().enumerate() {
         // Create simple, clean document ID
         let doc_id = format!(
@@ -228,21 +205,97 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
         if let Err(e) = db.fluent()
             .update()
-            .in_col("coffees")
+            .in_col("coffees_staging")
             .document_id(&doc_id)
             .object(coffee)
             .execute::<()>()
             .await
         {
-            tracing::warn!("Failed to insert coffee {}: {}", doc_id, e);
+            tracing::warn!("Failed to insert coffee to staging {}: {}", doc_id, e);
+            insert_errors += 1;
         }
 
         if (index + 1) % 50 == 0 {
-            info!("Inserted {}/{} coffees", index + 1, all_coffees.len());
+            info!("Staged {}/{} coffees", index + 1, all_coffees.len());
         }
     }
 
-    info!("Finished inserting all {} coffees", all_coffees.len());
+    if insert_errors > 0 {
+        tracing::error!("{} errors inserting to staging - aborting", insert_errors);
+        anyhow::bail!("Failed to insert all coffees to staging");
+    }
+
+    info!("Successfully staged all {} coffees", all_coffees.len());
+
+    // Step 2: Delete old production data
+    info!("Clearing production coffee data");
+    let prod_docs: Vec<String> = db
+        .fluent()
+        .select()
+        .from("coffees")
+        .obj()
+        .query()
+        .await?
+        .into_iter()
+        .map(|(doc_id, _): (String, Coffee)| doc_id)
+        .collect();
+
+    info!("Deleting {} old production documents", prod_docs.len());
+
+    for doc_id in prod_docs {
+        if let Err(e) = db.fluent()
+            .delete()
+            .from("coffees")
+            .document_id(&doc_id)
+            .execute()
+            .await
+        {
+            tracing::warn!("Failed to delete production document {}: {}", doc_id, e);
+        }
+    }
+
+    info!("Cleared production collection");
+
+    // Step 3: Copy staging to production
+    info!("Copying staging to production");
+    let staging_docs: Vec<(String, Coffee)> = db
+        .fluent()
+        .select()
+        .from("coffees_staging")
+        .obj()
+        .query()
+        .await?;
+
+    for (doc_id, coffee) in staging_docs.iter() {
+        if let Err(e) = db.fluent()
+            .update()
+            .in_col("coffees")
+            .document_id(doc_id)
+            .object(coffee)
+            .execute::<()>()
+            .await
+        {
+            tracing::warn!("Failed to copy coffee to production {}: {}", doc_id, e);
+        }
+    }
+
+    info!("Copied {} coffees to production", staging_docs.len());
+
+    // Step 4: Clear staging collection
+    info!("Clearing staging collection");
+    for (doc_id, _) in staging_docs {
+        if let Err(e) = db.fluent()
+            .delete()
+            .from("coffees_staging")
+            .document_id(&doc_id)
+            .execute()
+            .await
+        {
+            tracing::warn!("Failed to delete staging document {}: {}", doc_id, e);
+        }
+    }
+
+    info!("Successfully updated production with {} coffees", all_coffees.len());
 
     info!("Scraping completed");
     Ok(())
