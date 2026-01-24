@@ -4,11 +4,21 @@ This guide explains how to set up automatic Docker image builds using GitHub Act
 
 ## Quick Start
 
-### Step 1: Create GCP Service Account
+### Step 1: Create Terraform State Bucket
 
 ```bash
 export PROJECT_ID="coffee-aggregator-project"  # Replace with your project ID
 
+# Create bucket for Terraform state storage (required for CI/CD)
+gsutil mb -p $PROJECT_ID -l europe-west2 gs://coffee-aggregator-terraform-state
+
+# Enable versioning for state file safety
+gsutil versioning set on gs://coffee-aggregator-terraform-state
+```
+
+### Step 2: Create GCP Service Account
+
+```bash
 # Create service account
 gcloud iam service-accounts create github-actions \
   --display-name="GitHub Actions CI/CD" \
@@ -77,7 +87,7 @@ gcloud iam service-accounts keys create github-actions-key.json \
   --iam-account=github-actions@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-### Step 2: Add GitHub Repository Secrets
+### Step 3: Add GitHub Repository Secrets
 
 1. Go to your GitHub repository
 2. Click **Settings** → **Secrets and variables** → **Actions**
@@ -96,7 +106,19 @@ gcloud iam service-accounts keys create github-actions-key.json \
   # Copy the entire output
   ```
 
-### Step 3: Initial Manual Build (Required!)
+### Step 4: Initialize Terraform with Remote State
+
+```bash
+cd terraform
+
+# Initialize Terraform with the GCS backend
+terraform init
+
+# If you have existing local state, migrate it:
+# terraform init -migrate-state
+```
+
+### Step 5: Initial Manual Build (Required!)
 
 **IMPORTANT**: You must build the images manually once before Terraform can work:
 
@@ -115,17 +137,16 @@ cd ../builder
 
 This creates the initial images in Google Container Registry.
 
-### Step 4: Run Terraform
+### Step 6: Run Terraform
 
 Now that the images exist, you can run Terraform:
 
 ```bash
 cd terraform
-terraform init
 terraform apply
 ```
 
-### Step 5: Push to Main Branch
+### Step 7: Push to Main Branch
 
 After the initial setup, pushing any changes to `main` branch will automatically:
 1. Build updated Docker images
