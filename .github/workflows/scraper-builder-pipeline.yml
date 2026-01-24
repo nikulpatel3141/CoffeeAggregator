@@ -1,0 +1,82 @@
+name: Coffee Scraper & Builder Pipeline
+
+on:
+  # Run daily at 6 AM UK time
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    name: Scrape Coffee Data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: scraper
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run scraper
+        working-directory: scraper
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          echo "🚀 Starting coffee scraper..."
+          cargo run --release
+          echo "✅ Scraping complete"
+
+  build:
+    name: Build & Deploy Static Site
+    runs-on: ubuntu-latest
+    needs: scrape
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: builder
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run builder
+        working-directory: builder
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REPO_URL: github.com/nikulpatel3141/CoffeeAggregatorWebsite
+          TARGET_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: |
+          echo "🏗️ Starting static site builder..."
+          cargo run --release
+          echo "✅ Build and deploy complete"
+
+      - name: Summary
+        run: |
+          echo "### ✅ Pipeline Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Coffee data scraped and stored in Firestore" >> $GITHUB_STEP_SUMMARY
+          echo "- Static site built and pushed to CoffeeAggregatorWebsite repo" >> $GITHUB_STEP_SUMMARY
+          echo "- Vercel will auto-deploy the updates" >> $GITHUB_STEP_SUMMARY
