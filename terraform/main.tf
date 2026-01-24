@@ -57,7 +57,7 @@ resource "google_cloud_run_service" "scraper" {
         "autoscaling.knative.dev/maxScale" = "10"
         "run.googleapis.com/client-name"   = "terraform"
         # Change this value to force a new deployment
-        "deployment-version" = "v4"
+        "deployment-version" = "v5"
       }
     }
 
