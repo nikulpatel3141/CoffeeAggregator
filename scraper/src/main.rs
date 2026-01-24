@@ -96,48 +96,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         anyhow::bail!("No coffees scraped - not overwriting existing data");
     }
 
-    // Step 0: Clear any leftover staging data from previous runs
-    info!("Clearing staging collection from previous runs");
-    let old_staging_result = db
-        .fluent()
-        .select()
-        .from("coffees_staging")
-        .obj()
-        .query()
-        .await;
-
-    match old_staging_result {
-        Ok(old_staging_docs) => {
-            let doc_ids: Vec<String> = old_staging_docs
-                .into_iter()
-                .map(|(doc_id, _): (String, Coffee)| doc_id)
-                .collect();
-
-            if !doc_ids.is_empty() {
-                info!("Deleting {} old staging documents", doc_ids.len());
-                for doc_id in doc_ids {
-                    if let Err(e) = db.fluent()
-                        .delete()
-                        .from("coffees_staging")
-                        .document_id(&doc_id)
-                        .execute()
-                        .await
-                    {
-                        tracing::error!("Failed to delete staging doc {}: {}", doc_id, e);
-                    }
-                }
-                info!("Cleared old staging data");
-            } else {
-                info!("No old staging data to clear");
-            }
-        }
-        Err(e) => {
-            // If staging collection doesn't exist yet, that's fine
-            info!("Staging collection doesn't exist or is empty: {}", e);
-        }
-    }
-
     // Step 1: Write all coffees to staging collection
+    // Note: Using .update() will overwrite any existing staging data
     info!("Writing {} coffees to staging collection", all_coffees.len());
     let mut insert_errors = 0;
 
@@ -158,14 +118,14 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         );
 
         if let Err(e) = db.fluent()
-            .insert()
-            .into("coffees_staging")
+            .update()
+            .in_col("coffees_staging")
             .document_id(&doc_id)
             .object(coffee)
             .execute::<()>()
             .await
         {
-            tracing::warn!("Failed to insert coffee to staging {}: {}", doc_id, e);
+            tracing::warn!("Failed to write coffee to staging {}: {}", doc_id, e);
             insert_errors += 1;
         }
 
@@ -183,36 +143,60 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     // Step 2: Delete old production data
     info!("Clearing production coffee data");
-    let prod_docs: Vec<String> = db
+
+    // Get all coffee objects from production (we don't need the document IDs for deletion)
+    let prod_coffees: Vec<Coffee> = match db
         .fluent()
         .select()
         .from("coffees")
         .obj()
         .query()
-        .await?
-        .into_iter()
-        .map(|(doc_id, _): (String, Coffee)| doc_id)
-        .collect();
-
-    info!("Deleting {} old production documents", prod_docs.len());
-
-    for doc_id in prod_docs {
-        if let Err(e) = db.fluent()
-            .delete()
-            .from("coffees")
-            .document_id(&doc_id)
-            .execute()
-            .await
-        {
-            tracing::warn!("Failed to delete production document {}: {}", doc_id, e);
+        .await
+    {
+        Ok(coffees) => coffees,
+        Err(e) => {
+            info!("No existing production data to clear ({})", e);
+            Vec::new()
         }
-    }
+    };
 
-    info!("Cleared production collection");
+    if !prod_coffees.is_empty() {
+        info!("Deleting {} old production documents", prod_coffees.len());
+
+        // Delete all documents by recreating deterministic IDs
+        for coffee in &prod_coffees {
+            let doc_id = format!(
+                "{}__{}",
+                coffee.roaster
+                    .replace(" ", "_")
+                    .replace("/", "_")
+                    .replace(".", "_")
+                    .to_lowercase(),
+                coffee.name
+                    .replace(" ", "_")
+                    .replace("/", "_")
+                    .replace(".", "_")
+                    .to_lowercase()
+            );
+
+            if let Err(e) = db.fluent()
+                .delete()
+                .from("coffees")
+                .document_id(&doc_id)
+                .execute()
+                .await
+            {
+                tracing::warn!("Failed to delete production document {}: {}", doc_id, e);
+            }
+        }
+        info!("Cleared production collection");
+    } else {
+        info!("No production data to clear");
+    }
 
     // Step 3: Copy staging to production
     info!("Copying staging to production");
-    let staging_docs: Vec<(String, Coffee)> = db
+    let staging_coffees: Vec<Coffee> = db
         .fluent()
         .select()
         .from("coffees_staging")
@@ -221,11 +205,26 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         .await?;
 
     let mut copy_errors = 0;
-    for (index, (doc_id, coffee)) in staging_docs.iter().enumerate() {
+    for (index, coffee) in staging_coffees.iter().enumerate() {
+        // Recreate the deterministic document ID
+        let doc_id = format!(
+            "{}__{}",
+            coffee.roaster
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase(),
+            coffee.name
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase()
+        );
+
         if let Err(e) = db.fluent()
             .insert()
             .into("coffees")
-            .document_id(doc_id)
+            .document_id(&doc_id)
             .object(coffee)
             .execute::<()>()
             .await
@@ -235,7 +234,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
 
         if (index + 1) % 50 == 0 {
-            info!("Copied {}/{} coffees to production", index + 1, staging_docs.len());
+            info!("Copied {}/{} coffees to production", index + 1, staging_coffees.len());
         }
     }
 
@@ -244,11 +243,25 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         anyhow::bail!("Failed to copy all coffees to production - data may be in staging");
     }
 
-    info!("Successfully copied {} coffees to production", staging_docs.len());
+    info!("Successfully copied {} coffees to production", staging_coffees.len());
 
     // Step 4: Clear staging collection
     info!("Clearing staging collection");
-    for (doc_id, _) in staging_docs {
+    for coffee in &staging_coffees {
+        let doc_id = format!(
+            "{}__{}",
+            coffee.roaster
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase(),
+            coffee.name
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase()
+        );
+
         if let Err(e) = db.fluent()
             .delete()
             .from("coffees_staging")
@@ -260,7 +273,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     }
 
-    info!("Successfully updated production with {} coffees", all_coffees.len());
+    info!("Successfully updated production with {} coffees", staging_coffees.len());
 
     info!("Scraping completed");
     Ok(())
