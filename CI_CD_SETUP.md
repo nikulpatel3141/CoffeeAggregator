@@ -14,9 +14,16 @@ gcloud iam service-accounts create github-actions \
   --display-name="GitHub Actions CI/CD" \
   --project=$PROJECT_ID
 
-# Grant minimal necessary permissions for GCR
+# Grant necessary permissions for GCR and Terraform
 # storage.objectCreator: Create new objects (push images)
 # storage.objectViewer: View objects (check existing layers)
+# run.admin: Manage Cloud Run services (for Terraform)
+# iam.serviceAccountUser: Use service accounts (for Cloud Run)
+# workflows.admin: Manage Cloud Workflows (for Terraform)
+# cloudscheduler.admin: Manage Cloud Scheduler (for Terraform)
+# secretmanager.viewer: View secrets (for Terraform state)
+
+# Storage permissions (for Docker images)
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/storage.objectCreator"
@@ -24,6 +31,46 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/storage.objectViewer"
+
+# Cloud Run permissions (for Terraform deployments)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+# IAM permissions (to assign service accounts to Cloud Run)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+# Workflows permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/workflows.admin"
+
+# Cloud Scheduler permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/cloudscheduler.admin"
+
+# Firestore permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/datastore.owner"
+
+# Service Account Admin (to create/manage service accounts)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountAdmin"
+
+# Secret Manager permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.viewer"
+
+# Service Usage permissions (to enable APIs)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/serviceusage.serviceUsageAdmin"
 
 # Create and download service account key
 gcloud iam service-accounts keys create github-actions-key.json \
@@ -83,13 +130,15 @@ terraform apply
 After the initial setup, pushing any changes to `main` branch will automatically:
 1. Build updated Docker images
 2. Push them to GCR
-3. Cloud Run will automatically use the new images
+3. Automatically bump deployment versions in Terraform
+4. Run `terraform apply` to deploy the new versions
+5. Commit the version bump back to the repository
 
 ## How It Works
 
 The GitHub Actions workflow (`.github/workflows/build-images.yml`) automatically runs when you:
 - Push to the `main` branch
-- Modify files in `scraper/**` or `builder/**`
+- Modify files in `scraper/**`, `builder/**`, or `terraform/**`
 - Update the workflow file itself
 
 The workflow:
@@ -97,7 +146,10 @@ The workflow:
 2. Authenticates with GCP using the service account key
 3. Builds both Docker images
 4. Pushes them to Google Container Registry with the `latest` tag
-5. Cloud Run automatically picks up the new images
+5. **Automatically bumps deployment versions** (v8 → v9, etc.)
+6. Runs `terraform init` and `terraform apply`
+7. Commits the version bump back to main branch
+8. Cloud Run picks up the new images with the bumped version
 
 ## Workflow Triggers
 
@@ -110,15 +162,21 @@ on:
     paths:
       - 'scraper/**'
       - 'builder/**'
+      - 'terraform/**'
       - '.github/workflows/build-images.yml'
 ```
 
 This means:
-- ✅ Changes to scraper code → triggers build
-- ✅ Changes to builder code → triggers build
-- ✅ Changes to workflow → triggers build
-- ❌ Changes only to frontend → does NOT trigger build
-- ❌ Changes only to terraform → does NOT trigger build
+- ✅ Changes to scraper code → triggers build and deploy
+- ✅ Changes to builder code → triggers build and deploy
+- ✅ Changes to terraform files → triggers deploy
+- ✅ Changes to workflow → triggers build and deploy
+- ❌ Changes only to frontend → does NOT trigger workflow
+- ❌ Changes only to README files → does NOT trigger workflow
+
+**Important**: When terraform files change without code changes, the workflow will:
+- Skip building Docker images (they haven't changed)
+- Still run `terraform apply` to deploy infrastructure changes
 
 ## Viewing Build Status
 

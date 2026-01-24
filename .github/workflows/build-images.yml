@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+name: Build and Deploy
 
 on:
   push:
@@ -7,19 +7,23 @@ on:
     paths:
       - 'scraper/**'
       - 'builder/**'
+      - 'terraform/**'
       - '.github/workflows/build-images.yml'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  TF_VERSION: '1.6.0'
 
 jobs:
-  build-and-push:
-    name: Build and Push Images
+  build-and-deploy:
+    name: Build Images and Deploy
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -41,3 +45,56 @@ jobs:
         run: |
           docker build -t gcr.io/$PROJECT_ID/coffee-builder:latest ./builder
           docker push gcr.io/$PROJECT_ID/coffee-builder:latest
+
+      - name: Bump deployment versions
+        id: bump_version
+        run: |
+          cd terraform
+
+          # Get current scraper version
+          SCRAPER_VERSION=$(grep -A 5 'coffee-scraper' main.tf | grep 'deployment-version' | grep -o 'v[0-9]*' | head -1)
+          SCRAPER_NUM=${SCRAPER_VERSION#v}
+          NEW_SCRAPER_NUM=$((SCRAPER_NUM + 1))
+
+          # Get current builder version
+          BUILDER_VERSION=$(grep -A 5 'coffee-builder' main.tf | grep 'deployment-version' | grep -o 'v[0-9]*' | head -1)
+          BUILDER_NUM=${BUILDER_VERSION#v}
+          NEW_BUILDER_NUM=$((BUILDER_NUM + 1))
+
+          # Update versions in main.tf
+          sed -i "0,/deployment-version.*=.*\"v${SCRAPER_NUM}\"/s//deployment-version = \"v${NEW_SCRAPER_NUM}\"/" main.tf
+          sed -i "0,/deployment-version.*=.*\"v${BUILDER_NUM}\"/s//deployment-version = \"v${NEW_BUILDER_NUM}\"/" main.tf
+
+          echo "scraper_version=v${NEW_SCRAPER_NUM}" >> $GITHUB_OUTPUT
+          echo "builder_version=v${NEW_BUILDER_NUM}" >> $GITHUB_OUTPUT
+
+          # Show changes
+          git diff main.tf
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      - name: Terraform Plan
+        run: |
+          cd terraform
+          terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve tfplan
+
+      - name: Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add terraform/main.tf
+          git commit -m "Bump deployment versions: scraper=${{ steps.bump_version.outputs.scraper_version }}, builder=${{ steps.bump_version.outputs.builder_version }}" || echo "No changes to commit"
+          git push || echo "No changes to push"
