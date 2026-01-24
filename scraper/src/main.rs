@@ -150,6 +150,17 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     }
 
+    // Filter out bundles and unwanted items
+    all_coffees.retain(|coffee| {
+        let name_lower = coffee.name.to_lowercase();
+        !name_lower.contains("bundle")
+            && !name_lower.contains("subscription")
+            && !name_lower.contains("sample")
+            && !name_lower.contains("taster")
+    });
+
+    info!("After filtering bundles: {} coffees", all_coffees.len());
+
     // Filter coffees by price (max £50)
     all_coffees.retain(|coffee| {
         if let Some(price_str) = &coffee.price {
@@ -165,11 +176,11 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     });
 
-    info!("Filtered to {} coffees under £50", all_coffees.len());
+    info!("After price filtering: {} coffees under £50", all_coffees.len());
 
-    // Clear existing coffees from Firestore
-    info!("Clearing old coffee data from Firestore");
-    let existing_coffees: Vec<String> = db
+    // Clear ALL existing coffees from Firestore
+    info!("Clearing ALL coffee data from Firestore");
+    let all_docs: Vec<String> = db
         .fluent()
         .select()
         .from("coffees")
@@ -177,38 +188,61 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         .query()
         .await?
         .into_iter()
-        .filter_map(|(doc_id, _): (String, Coffee)| Some(doc_id))
+        .map(|(doc_id, _): (String, Coffee)| doc_id)
         .collect();
 
-    let old_count = existing_coffees.len();
+    info!("Found {} existing documents to delete", all_docs.len());
 
-    for doc_id in existing_coffees {
-        db.fluent()
+    // Delete in batches for better performance
+    for doc_id in all_docs {
+        if let Err(e) = db.fluent()
             .delete()
             .from("coffees")
             .document_id(&doc_id)
             .execute()
-            .await?;
+            .await
+        {
+            tracing::warn!("Failed to delete document {}: {}", doc_id, e);
+        }
     }
 
-    info!("Deleted {} old documents", old_count);
+    info!("Cleared all old documents");
 
     // Store new coffees in Firestore
-    for coffee in all_coffees {
+    info!("Inserting {} new coffees", all_coffees.len());
+    for (index, coffee) in all_coffees.iter().enumerate() {
+        // Create simple, clean document ID
         let doc_id = format!(
-            "{}_{}",
-            coffee.roaster.replace(" ", "_").replace("/", "_"),
-            coffee.name.replace(" ", "_").replace("/", "_")
+            "{}__{}",
+            coffee.roaster
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase(),
+            coffee.name
+                .replace(" ", "_")
+                .replace("/", "_")
+                .replace(".", "_")
+                .to_lowercase()
         );
 
-        db.fluent()
-            .insert()
-            .into("coffees")
+        if let Err(e) = db.fluent()
+            .update()
+            .in_col("coffees")
             .document_id(&doc_id)
             .object(&coffee)
             .execute::<()>()
-            .await?;
+            .await
+        {
+            tracing::warn!("Failed to insert coffee {}: {}", doc_id, e);
+        }
+
+        if (index + 1) % 50 == 0 {
+            info!("Inserted {}/{} coffees", index + 1, all_coffees.len());
+        }
     }
+
+    info!("Finished inserting all {} coffees", all_coffees.len());
 
     info!("Scraping completed");
     Ok(())
