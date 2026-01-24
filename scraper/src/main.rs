@@ -231,8 +231,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         );
 
         if let Err(e) = db.fluent()
-            .update()
-            .in_col("coffees_staging")
+            .insert()
+            .into("coffees_staging")
             .document_id(&doc_id)
             .object(coffee)
             .execute::<()>()
@@ -296,8 +296,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     let mut copy_errors = 0;
     for (index, (doc_id, coffee)) in staging_docs.iter().enumerate() {
         if let Err(e) = db.fluent()
-            .update()
-            .in_col("coffees")
+            .insert()
+            .into("coffees")
             .document_id(doc_id)
             .object(coffee)
             .execute::<()>()
