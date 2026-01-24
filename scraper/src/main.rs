@@ -230,7 +230,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
             .update()
             .in_col("coffees")
             .document_id(&doc_id)
-            .object(&coffee)
+            .object(coffee)
             .execute::<()>()
             .await
         {
