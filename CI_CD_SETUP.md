@@ -107,8 +107,8 @@ cat github-actions-key.json
 - Name: `GCP_SA_KEY`
 - Value: The entire contents of `github-actions-key.json` (copy everything including braces)
 
-**Secret 3: GITHUB_PAT**
-- Name: `GITHUB_PAT`
+**Secret 3: BUILDER_GITHUB_TOKEN**
+- Name: `BUILDER_GITHUB_TOKEN`
 - Value: Your GitHub Personal Access Token from Step 3
 
 ### Step 5: Test the Workflow
@@ -251,7 +251,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 **Solution**:
 1. Create a new Personal Access Token with `repo` scope
-2. Update `GITHUB_PAT` secret in repository settings
+2. Update `BUILDER_GITHUB_TOKEN` secret in repository settings
 3. Re-run workflow
 
 ### No coffees appearing on website
