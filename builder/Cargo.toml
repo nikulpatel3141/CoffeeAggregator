@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+coffee-common = { path = "../common" }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -13,7 +14,3 @@ chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-axum = "0.7"
-jsonwebtoken = "9.2"
-reqwest = { version = "0.11", features = ["json"] }
-base64 = "0.21"
