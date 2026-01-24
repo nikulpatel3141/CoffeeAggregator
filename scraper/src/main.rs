@@ -183,6 +183,33 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         anyhow::bail!("No coffees scraped - not overwriting existing data");
     }
 
+    // Step 0: Clear any leftover staging data from previous runs
+    info!("Clearing staging collection from previous runs");
+    let old_staging_docs: Vec<String> = db
+        .fluent()
+        .select()
+        .from("coffees_staging")
+        .obj()
+        .query()
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(doc_id, _): (String, Coffee)| doc_id)
+        .collect();
+
+    if !old_staging_docs.is_empty() {
+        info!("Deleting {} old staging documents", old_staging_docs.len());
+        for doc_id in old_staging_docs {
+            let _ = db.fluent()
+                .delete()
+                .from("coffees_staging")
+                .document_id(&doc_id)
+                .execute()
+                .await;
+        }
+        info!("Cleared old staging data");
+    }
+
     // Step 1: Write all coffees to staging collection
     info!("Writing {} coffees to staging collection", all_coffees.len());
     let mut insert_errors = 0;
@@ -266,7 +293,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         .query()
         .await?;
 
-    for (doc_id, coffee) in staging_docs.iter() {
+    let mut copy_errors = 0;
+    for (index, (doc_id, coffee)) in staging_docs.iter().enumerate() {
         if let Err(e) = db.fluent()
             .update()
             .in_col("coffees")
@@ -275,11 +303,21 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
             .execute::<()>()
             .await
         {
-            tracing::warn!("Failed to copy coffee to production {}: {}", doc_id, e);
+            tracing::error!("Failed to copy coffee to production {}: {}", doc_id, e);
+            copy_errors += 1;
+        }
+
+        if (index + 1) % 50 == 0 {
+            info!("Copied {}/{} coffees to production", index + 1, staging_docs.len());
         }
     }
 
-    info!("Copied {} coffees to production", staging_docs.len());
+    if copy_errors > 0 {
+        tracing::error!("{} errors copying to production!", copy_errors);
+        anyhow::bail!("Failed to copy all coffees to production - data may be in staging");
+    }
+
+    info!("Successfully copied {} coffees to production", staging_docs.len());
 
     // Step 4: Clear staging collection
     info!("Clearing staging collection");
