@@ -78,18 +78,22 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
 
         // Filter out equipment (V60, Chemex, filters, servers, etc.)
-        if name_lower.contains("v60") || name_lower.contains("chemex") || name_lower.contains("filter")
-            || name_lower.contains("paper") || name_lower.contains("server") || name_lower.contains("mug")
+        // Be careful not to filter "filter roast" coffees - only filter paper/equipment
+        if name_lower.contains("v60") || name_lower.contains("chemex")
+            || name_lower.contains("filter paper") || name_lower.contains("paper filter")
+            || name_lower.contains("server") || name_lower.contains("mug")
             || name_lower.contains("cup") || name_lower.contains("dripper") || name_lower.contains("brewer")
             || name_lower.contains("grinder") || name_lower.contains("kettle") || name_lower.contains("tamper")
             || name_lower.contains("jug") || name_lower.contains("carafe") || name_lower.contains("aeropress")
             || name_lower.contains("cafetiere") || name_lower.contains("french press") || name_lower.contains("moka pot")
             || name_lower.contains("scales") || name_lower.contains("scale") || name_lower.contains("thermometer")
             || name_lower.contains("pitcher") || name_lower.contains("bottle") || name_lower.contains("flask")
-            || name_lower.contains("pour over set") || name_lower.contains("brewing") || name_lower.contains("equipment")
+            || name_lower.contains("pour over set") || name_lower.contains("brewing kit") || name_lower.contains("equipment")
             || name_lower.contains("accessories") || name_lower.contains("storage") || name_lower.contains("canister")
             || name_lower.contains("spoon") || name_lower.contains("scoop") || name_lower.contains("cloth")
-            || name_lower.contains("towel") || name_lower.contains("mat") || name_lower.contains("tray") {
+            || name_lower.contains("towel") || name_lower.contains("mat") || name_lower.contains("tray")
+            || name_lower.contains("hario") || name_lower.contains("kalita") || name_lower.contains("origami")
+            || name_lower.contains("clever") || name_lower.contains("portafilter") {
             return false;
         }
 

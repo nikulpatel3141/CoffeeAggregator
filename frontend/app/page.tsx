@@ -369,9 +369,13 @@ export default function Home() {
                   All Coffees
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Showing {itemsPerPage === -1 ? 1 : ((currentPage - 1) * itemsPerPage) + 1}-{itemsPerPage === -1 ? filteredCoffees.length : Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
-                  <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
-                  ({coffees.length} total)
+                  {filteredCoffees.length === 0 ? (
+                    <>Showing 0 of <span className="font-semibold text-amber-700 dark:text-amber-400">0</span> filtered ({coffees.length} total)</>
+                  ) : (
+                    <>Showing {itemsPerPage === -1 ? 1 : ((currentPage - 1) * itemsPerPage) + 1}-{itemsPerPage === -1 ? filteredCoffees.length : Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
+                    <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
+                    ({coffees.length} total)</>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
