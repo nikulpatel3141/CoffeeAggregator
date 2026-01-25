@@ -63,16 +63,46 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     }
 
-    // Filter out bundles and unwanted items
+    // Filter out bundles, equipment, tasting sets, and other unwanted items
     all_coffees.retain(|coffee| {
         let name_lower = coffee.name.to_lowercase();
-        !name_lower.contains("bundle")
-            && !name_lower.contains("subscription")
-            && !name_lower.contains("sample")
-            && !name_lower.contains("taster")
+        
+        // Filter out bundles and subscriptions
+        if name_lower.contains("bundle") || name_lower.contains("subscription") {
+            return false;
+        }
+        
+        // Filter out samples and tasting sets
+        if name_lower.contains("sample") || name_lower.contains("taster") || name_lower.contains("tasting set") {
+            return false;
+        }
+        
+        // Filter out equipment (V60, Chemex, filters, servers, etc.)
+        if name_lower.contains("v60") || name_lower.contains("chemex") || name_lower.contains("filter")
+            || name_lower.contains("server") || name_lower.contains("mug") || name_lower.contains("cup")
+            || name_lower.contains("dripper") || name_lower.contains("brewer") || name_lower.contains("grinder")
+            || name_lower.contains("kettle") || name_lower.contains("tamper") || name_lower.contains("jug")
+            || name_lower.contains("carafe") || name_lower.contains("aeropress") || name_lower.contains("cafetiere")
+            || name_lower.contains("french press") || name_lower.contains("moka pot") || name_lower.contains("scales")
+            || name_lower.contains("thermometer") {
+            return false;
+        }
+        
+        // Filter out coffee pods
+        if name_lower.contains(" pod") || name_lower.contains("pods") || name_lower.contains("capsule") {
+            return false;
+        }
+        
+        // Filter out blends (conservatively - only if explicitly labeled)
+        // We check for "blend" in name but NOT if it's part of another word like "blended"
+        if name_lower.contains(" blend") || name_lower.starts_with("blend") || name_lower.ends_with("blend") {
+            return false;
+        }
+        
+        true
     });
 
-    info!("After filtering bundles: {} coffees", all_coffees.len());
+    info!("After filtering unwanted items: {} coffees", all_coffees.len());
 
     // Filter coffees by price (max £50)
     all_coffees.retain(|coffee| {

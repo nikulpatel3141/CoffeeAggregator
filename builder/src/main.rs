@@ -225,17 +225,40 @@ async fn clone_source_repo(github_token: &str, repo_url: &str, branch: &str) -> 
 
 async fn copy_frontend_to_website() -> Result<()> {
     let source = "/tmp/coffee-source-repo/frontend";
-    let dest = "/tmp/coffee-tracker-repo/frontend";
+    let dest = "/tmp/coffee-tracker-repo";
 
-    // Remove existing frontend directory if it exists
-    if std::path::Path::new(&dest).exists() {
-        std::fs::remove_dir_all(&dest)?;
+    // Copy frontend contents directly to root of website repo (not in a subdirectory)
+    // This means package.json, app/, components/, etc. go to the root
+    for entry in std::fs::read_dir(source)? {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        
+        // Skip node_modules and build artifacts
+        if file_name == "node_modules" || file_name == ".next" || file_name == ".git" {
+            continue;
+        }
+
+        let source_path = entry.path();
+        let dest_path = std::path::Path::new(&dest).join(&file_name);
+        
+        // Remove existing file/directory if it exists
+        if dest_path.exists() {
+            if dest_path.is_dir() {
+                std::fs::remove_dir_all(&dest_path)?;
+            } else {
+                std::fs::remove_file(&dest_path)?;
+            }
+        }
+
+        // Copy file or directory
+        if source_path.is_dir() {
+            copy_dir_all(&source_path, &dest_path)?;
+        } else {
+            std::fs::copy(&source_path, &dest_path)?;
+        }
     }
 
-    // Copy entire frontend directory
-    copy_dir_all(source, dest)?;
-
-    info!("Frontend source copied to website repo");
+    info!("Frontend contents copied to website repo root");
     Ok(())
 }
 
@@ -259,7 +282,8 @@ fn copy_dir_all(src: impl AsRef<std::path::Path>, dst: impl AsRef<std::path::Pat
 }
 
 async fn export_to_json(coffees: &[Coffee]) -> Result<()> {
-    let data_dir = "/tmp/coffee-tracker-repo/frontend/public/data";
+    // Export to public/data in the root of the website repo
+    let data_dir = "/tmp/coffee-tracker-repo/public/data";
     std::fs::create_dir_all(data_dir)?;
 
     // Export all coffees
@@ -308,9 +332,9 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
         .args(&["config", "user.email", "nikulpatel3141@users.noreply.github.com"])
         .output()?;
 
-    // Add all frontend changes (entire Next.js app + data)
+    // Add all changes (since frontend contents are now at root)
     let output = Command::new("git")
-        .args(&["add", "frontend/"])
+        .args(&["add", "."])
         .output()?;
 
     if !output.status.success() {
@@ -328,7 +352,7 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
     }
 
     // Commit changes
-    let commit_msg = format!("Update frontend and coffee data - {}", Utc::now().format("%Y-%m-%d %H:%M UTC"));
+    let commit_msg = format!("Update coffee data and frontend - {}", Utc::now().format("%Y-%m-%d %H:%M UTC"));
     let output = Command::new("git")
         .args(&["commit", "-m", &commit_msg])
         .output()?;
@@ -347,7 +371,6 @@ async fn commit_and_push(target_branch: &str) -> Result<()> {
         .env("GIT_ASKPASS", "echo")
         .args(&["push", "-u", "origin", target_branch])
         .output()?;
-
     if !output.status.success() {
         anyhow::bail!("Failed to push: {}", String::from_utf8_lossy(&output.stderr));
     }

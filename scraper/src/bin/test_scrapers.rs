@@ -47,7 +47,6 @@ async fn main() -> Result<()> {
             }
         }
     }
-
     println!("\n═══════════════════════════════════════════════");
     println!("📊 Results Summary:");
     println!("  ✅ Successful: {}/12 roasters", successful_scrapers);
@@ -66,6 +65,21 @@ async fn main() -> Result<()> {
 
     println!("═══════════════════════════════════════════════\n");
 
+    // Write results to JSON file for easy debugging
+    let results = serde_json::json!({
+        "total_coffees": total_coffees,
+        "successful_scrapers": successful_scrapers,
+        "failed_scrapers": failed_scrapers,
+        "average_per_roaster": total_coffees as f32 / successful_scrapers.max(1) as f32
+    });
+
+    let output_path = "test_scraper_results.json";
+    if let Err(e) = std::fs::write(output_path, serde_json::to_string_pretty(&results)?) {
+        println!("⚠️  Failed to write results to {}: {}", output_path, e);
+    } else {
+        println!("💾 Results saved to {}\n", output_path);
+    }
+
     if successful_scrapers == 0 {
         anyhow::bail!("All scrapers failed - check network connection");
     }
@@ -75,6 +89,9 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+async fn test_roaster_website(url: &str) -> Result<(usize, &'static str)> {
 }
 
 async fn test_roaster_website(url: &str) -> Result<(usize, &'static str)> {
