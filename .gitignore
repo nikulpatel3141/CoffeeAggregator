@@ -3,3 +3,7 @@ target/
 .terraform/
 *.tfstate*
 .env
+
+# Next.js build artifacts
+.next/
+next-env.d.ts
