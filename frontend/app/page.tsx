@@ -264,63 +264,30 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      <div className="max-w-[1400px] mx-auto p-6">
+      <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6">
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-12 h-12">
-                  <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
-                  <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
-                  <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                  <path d="M12 11 Q12 9, 13 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                  <path d="M16 10 Q16 8, 17 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                  <path d="M20 11 Q20 9, 21 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                </svg>
-                UK Specialty Coffee Tracker
-              </h1>
-              <p className="text-gray-700 dark:text-gray-300 text-lg">
-                Discover specialty coffee from top UK roasters, visualized by origin region
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Tab Navigation */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveTab('coffees')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    activeTab === 'coffees'
-                      ? 'bg-amber-600 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  Coffee List
-                </button>
-                <button
-                  onClick={() => setActiveTab('subscriptions')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    activeTab === 'subscriptions'
-                      ? 'bg-amber-600 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  Subscriptions
-                </button>
-                <button
-                  onClick={() => setActiveTab('readme')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    activeTab === 'readme'
-                      ? 'bg-amber-600 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  About
-                </button>
+        <header className="mb-6 md:mb-8">
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-2 sm:gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0">
+                    <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
+                    <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
+                    <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                    <path d="M12 11 Q12 9, 13 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                    <path d="M16 10 Q16 8, 17 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                    <path d="M20 11 Q20 9, 21 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
+                  </svg>
+                  <span className="break-words">UK Specialty Coffee Tracker</span>
+                </h1>
+                <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base md:text-lg">
+                  Discover specialty coffee from top UK roasters, visualized by origin region
+                </p>
               </div>
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all"
+                className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
                 aria-label="Toggle dark mode"
               >
                 {isDarkMode ? (
@@ -334,6 +301,39 @@ export default function Home() {
                 )}
               </button>
             </div>
+            {/* Tab Navigation */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setActiveTab('coffees')}
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                  activeTab === 'coffees'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                Coffee List
+              </button>
+              <button
+                onClick={() => setActiveTab('subscriptions')}
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                  activeTab === 'subscriptions'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                Subscriptions
+              </button>
+              <button
+                onClick={() => setActiveTab('readme')}
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                  activeTab === 'readme'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                About
+              </button>
+            </div>
           </div>
         </header>
 
@@ -341,7 +341,7 @@ export default function Home() {
         {activeTab === 'coffees' && (
           <>
             {/* Filters and Map Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
               {/* Left: Filters */}
               <CoffeeFilters
                 onFilterChange={setFilters}
@@ -353,28 +353,28 @@ export default function Home() {
               />
 
               {/* Right: Map */}
-              <div className="sticky top-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden" style={{ height: '500px' }}>
+              <div className="lg:sticky lg:top-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px]">
                   <CoffeeMap coffees={filteredCoffees} />
                 </div>
               </div>
             </div>
             {/* Coffee Count, Pagination Controls, and View Toggle */}
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 gap-3 sm:gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-400">
+                <h2 className="text-xl sm:text-2xl font-bold text-amber-900 dark:text-amber-400">
                   All Coffees
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
                   <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
                   ({coffees.length} total)
                 </p>
               </div>
-              <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                 {/* Items per page selector */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="itemsPerPage" className="text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="itemsPerPage" className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                     Per page:
                   </label>
                   <select
@@ -384,7 +384,7 @@ export default function Home() {
                       setItemsPerPage(Number(e.target.value))
                       setCurrentPage(1)
                     }}
-                    className="p-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="p-1.5 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   >
                     <option value={25}>25</option>
                     <option value={50}>50</option>
@@ -392,14 +392,14 @@ export default function Home() {
                     <option value={filteredCoffees.length}>All</option>
                   </select>
                 </div>
-                
+
                 {/* Pagination buttons */}
                 {totalPages > 1 && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 sm:gap-1">
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       title="First page"
                     >
                       First
@@ -407,18 +407,18 @@ export default function Home() {
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       title="Previous page"
                     >
                       Prev
                     </button>
-                    <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                       {currentPage} / {totalPages}
                     </span>
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       title="Next page"
                     >
                       Next
@@ -426,31 +426,31 @@ export default function Home() {
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-2 py-1 text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       title="Last page"
                     >
                       Last
                     </button>
                   </div>
                 )}
-                
+
                 {/* View toggle */}
                 <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
                   <button
                     onClick={() => setViewMode('card')}
-                    className={'p-2 rounded transition-colors ' + (viewMode === 'card' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
+                    className={'p-1.5 sm:p-2 rounded transition-colors ' + (viewMode === 'card' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
                     aria-label="Card view"
                   >
-                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={'p-2 rounded transition-colors ' + (viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
+                    className={'p-1.5 sm:p-2 rounded transition-colors ' + (viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
                     aria-label="List view"
                   >
-                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                   </button>
@@ -489,11 +489,11 @@ export default function Home() {
                   </div>
                 ) : viewMode === 'card' ? (
                   /* Card View */
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
                       >
                         <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-1">
                           {coffee.name}
@@ -550,57 +550,62 @@ export default function Home() {
                     {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow border border-transparent dark:border-gray-700 flex items-center gap-4"
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow border border-transparent dark:border-gray-700"
                       >
-                        <div className="flex-1">
-                          <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                              <h3 className="text-base font-semibold text-amber-900 dark:text-amber-400">
-                                {coffee.name}
-                              </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{coffee.roaster}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-400 truncate">
+                                  {coffee.name}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">{coffee.roaster}</p>
+                              </div>
+                              {(coffee.origin || coffee.region) && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                                  <span>{getCountryFlag(coffee.origin || coffee.region)}</span>
+                                  <span className="hidden sm:inline">{coffee.region || coffee.origin}</span>
+                                </div>
+                              )}
                             </div>
-                            {(coffee.origin || coffee.region) && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                <span>{getCountryFlag(coffee.origin || coffee.region)}</span>
-                                <span>{coffee.region || coffee.origin}</span>
+                            {coffee.tasting_notes.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {coffee.tasting_notes.map((note, i) => {
+                                  const emoji = getTastingNoteEmoji(note)
+                                  return (
+                                    <span
+                                      key={i}
+                                      className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
+                                    >
+                                      {emoji && <span className="mr-1">{emoji}</span>}
+                                      {note}
+                                    </span>
+                                  )
+                                })}
                               </div>
                             )}
                           </div>
-                          {coffee.tasting_notes.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {coffee.tasting_notes.map((note, i) => {
-                                const emoji = getTastingNoteEmoji(note)
-                                return (
-                                  <span
-                                    key={i}
-                                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
-                                  >
-                                    {emoji && <span className="mr-1">{emoji}</span>}
-                                    {note}
-                                  </span>
-                                )
-                              })}
+                          <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
+                            {coffee.price && (
+                              <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
+                                {coffee.price}
+                                {coffee.weight && <span className="text-xs sm:text-sm font-normal text-gray-500 dark:text-gray-400 ml-1 hidden sm:inline">/ {coffee.weight}</span>}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={coffee.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block bg-amber-600 text-white text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-amber-700 transition-colors whitespace-nowrap"
+                              >
+                                View
+                              </a>
+                              {coffee.in_stock && (
+                                <span className="text-xs text-green-600 dark:text-green-400 font-medium whitespace-nowrap hidden sm:inline">In Stock</span>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {coffee.price && (
-                            <p className="text-base font-bold text-amber-600 dark:text-amber-400 min-w-[80px] text-right">
-                              {coffee.price}{coffee.weight && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/ {coffee.weight}</span>}
-                            </p>
-                          )}
-                          <a
-                            href={coffee.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-amber-600 text-white text-sm px-3 py-1.5 rounded hover:bg-amber-700 transition-colors whitespace-nowrap"
-                          >
-                            View Coffee
-                          </a>
-                          {coffee.in_stock && (
-                            <span className="text-xs text-green-600 dark:text-green-400 font-medium whitespace-nowrap">In Stock</span>
-                          )}
+                          </div>
                         </div>
                       </div>
                     ))}

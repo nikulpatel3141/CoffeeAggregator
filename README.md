@@ -126,6 +126,20 @@ npm run dev
 # Visit http://localhost:3000
 ```
 
+### Google Analytics (Optional)
+
+To enable Google Analytics tracking:
+
+1. Create a Google Analytics 4 property at https://analytics.google.com
+2. Get your Measurement ID (format: `G-XXXXXXXXXX`)
+3. Create a `.env.local` file in the `frontend/` directory:
+   ```bash
+   NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+   ```
+4. For Vercel deployment, add the environment variable in your Vercel project settings
+
+The site will work without Google Analytics - it's completely optional.
+
 ## Documentation
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
