@@ -499,12 +499,15 @@ async fn scrape_shopify_json(
 
             let (origin, region) = extract_origin_from_name(&name);
 
+            // Extract tasting notes from product tags and description
+            let tasting_notes = extract_tasting_notes(product);
+
             coffees.push(Coffee {
                 name,
                 roaster: roaster_name.to_string(),
                 origin,
                 region,
-                tasting_notes: Vec::new(),
+                tasting_notes,
                 price,
                 weight,
                 url: product_url,
@@ -530,6 +533,128 @@ async fn scrape_has_bean() -> Result<Vec<Coffee>> {
             scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
         }
     }
+}
+
+// Helper function to extract tasting notes from product data
+fn extract_tasting_notes(product: &serde_json::Value) -> Vec<String> {
+    let mut notes = Vec::new();
+
+    // Common tasting note keywords to look for
+    let tasting_keywords = vec![
+        "chocolate", "cocoa", "caramel", "toffee", "honey", "vanilla", "sugar", "molasses",
+        "berry", "berries", "blueberry", "strawberry", "raspberry", "blackberry", "cherry",
+        "citrus", "lemon", "lime", "orange", "grapefruit", "tangerine", "bergamot",
+        "tropical", "mango", "pineapple", "papaya", "passion fruit", "guava", "coconut",
+        "stone fruit", "peach", "apricot", "plum", "nectarine",
+        "apple", "pear", "grape", "melon", "watermelon",
+        "floral", "jasmine", "rose", "lavender", "hibiscus", "elderflower",
+        "nutty", "almond", "hazelnut", "walnut", "peanut", "cashew",
+        "spicy", "cinnamon", "clove", "cardamom", "ginger", "pepper", "nutmeg",
+        "herbal", "tea", "black tea", "green tea", "earl grey", "chamomile",
+        "wine", "winey", "red wine", "port",
+        "butter", "cream", "creamy", "milk chocolate", "dark chocolate",
+        "brown sugar", "maple", "syrup", "candy", "sweet",
+        "bright", "crisp", "clean", "smooth", "balanced", "complex", "rich",
+        "fruity", "juicy", "tangy", "zesty", "acidic",
+    ];
+
+    // Extract from tags
+    if let Some(tags) = product.get("tags").and_then(|t| t.as_str()) {
+        let tag_list: Vec<&str> = tags.split(',').map(|s| s.trim()).collect();
+        for tag in tag_list {
+            let tag_lower = tag.to_lowercase();
+            // Check if tag matches or contains a tasting keyword
+            for keyword in &tasting_keywords {
+                if tag_lower.contains(keyword) {
+                    // Clean up and format the note
+                    let note = tag.trim().to_string();
+                    if !note.is_empty() && note.len() < 30 && !notes.iter().any(|n: &String| n.to_lowercase() == note.to_lowercase()) {
+                        notes.push(capitalize_words(&note));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // Also try to extract from body_html if tags didn't yield results
+    if notes.is_empty() {
+        if let Some(body) = product.get("body_html").and_then(|b| b.as_str()) {
+            // Strip HTML tags and get plain text
+            let text = body
+                .replace("<br>", " ")
+                .replace("<br/>", " ")
+                .replace("<br />", " ")
+                .replace("</p>", " ")
+                .replace("</li>", " ")
+                .replace("</div>", " ");
+
+            // Simple HTML tag removal
+            let mut plain_text = String::new();
+            let mut in_tag = false;
+            for c in text.chars() {
+                if c == '<' {
+                    in_tag = true;
+                } else if c == '>' {
+                    in_tag = false;
+                } else if !in_tag {
+                    plain_text.push(c);
+                }
+            }
+
+            let text_lower = plain_text.to_lowercase();
+
+            // Look for patterns like "Tasting notes: chocolate, caramel" or "Notes: berry, citrus"
+            let note_patterns = ["tasting notes", "taste notes", "flavor notes", "flavour notes", "notes:"];
+            for pattern in note_patterns {
+                if let Some(pos) = text_lower.find(pattern) {
+                    // Get text after the pattern
+                    let after = &plain_text[pos + pattern.len()..];
+                    // Find where this section ends (next sentence or paragraph)
+                    let end_pos = after.find(|c| c == '.' || c == '\n').unwrap_or(after.len().min(200));
+                    let note_section = &after[..end_pos];
+
+                    // Split by common separators
+                    for note in note_section.split(|c| c == ',' || c == '/' || c == '|' || c == '&') {
+                        let note = note.trim().trim_matches(':').trim();
+                        let note_lower = note.to_lowercase();
+
+                        // Check if it matches any tasting keyword
+                        for keyword in &tasting_keywords {
+                            if note_lower.contains(keyword) && note.len() < 30 && note.len() > 2 {
+                                if !notes.iter().any(|n: &String| n.to_lowercase() == note_lower) {
+                                    notes.push(capitalize_words(note));
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    if !notes.is_empty() {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Limit to 5 notes max
+    notes.truncate(5);
+    notes
+}
+
+// Helper to capitalize words
+fn capitalize_words(s: &str) -> String {
+    s.split_whitespace()
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str().to_lowercase().as_str(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 // Helper function to extract origin/region from product name

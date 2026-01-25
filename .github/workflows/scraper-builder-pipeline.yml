@@ -24,6 +24,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: scraper
+          # Include source file hash in cache key to ensure recompilation when code changes
+          shared-key: scraper-${{ hashFiles('scraper/src/**/*.rs', 'common/src/**/*.rs') }}
+
+      # Force recompilation of binaries to ensure code changes are reflected
+      - name: Clear cached binaries
+        run: rm -rf scraper/target/release/coffee-scraper scraper/target/release/deps/coffee_scraper* || true
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -55,6 +61,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: builder
+          # Include source file hash in cache key to ensure recompilation when code changes
+          shared-key: builder-${{ hashFiles('builder/src/**/*.rs', 'common/src/**/*.rs') }}
+
+      # Force recompilation of binaries to ensure code changes are reflected
+      - name: Clear cached binaries
+        run: rm -rf builder/target/release/builder builder/target/release/deps/builder* || true
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
