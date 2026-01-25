@@ -254,13 +254,16 @@ export default function Home() {
     setCurrentPage(1)
   }, [filters])
 
-  // Paginated coffees
+  // Paginated coffees (itemsPerPage of -1 means show all)
   const paginatedCoffees = useMemo(() => {
+    if (itemsPerPage === -1) {
+      return filteredCoffees
+    }
     const startIndex = (currentPage - 1) * itemsPerPage
     return filteredCoffees.slice(startIndex, startIndex + itemsPerPage)
   }, [filteredCoffees, currentPage, itemsPerPage])
 
-  const totalPages = Math.ceil(filteredCoffees.length / itemsPerPage)
+  const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(filteredCoffees.length / itemsPerPage)
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
@@ -366,7 +369,7 @@ export default function Home() {
                   All Coffees
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
+                  Showing {itemsPerPage === -1 ? 1 : ((currentPage - 1) * itemsPerPage) + 1}-{itemsPerPage === -1 ? filteredCoffees.length : Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
                   <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
                   ({coffees.length} total)
                 </p>
@@ -389,7 +392,7 @@ export default function Home() {
                     <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
-                    <option value={filteredCoffees.length}>All</option>
+                    <option value={-1}>All</option>
                   </select>
                 </div>
 
