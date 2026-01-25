@@ -242,7 +242,7 @@ export default function Home() {
     }).sort((a, b) => {
       // Prioritize coffees with more complete metadata
       const aScore = (a.origin ? 2 : 0) + (a.region ? 1 : 0) + (a.tasting_notes.length > 0 ? 2 : 0)
-      const bScore = (b.origin ? 2 : 0) + (b.region ? 1 : 0) + (b.tasting_notes.length > 0 : 2 : 0)
+      const bScore = (b.origin ? 2 : 0) + (b.region ? 1 : 0) + (b.tasting_notes.length > 0 ? 2 : 0)
       if (aScore !== bScore) return bScore - aScore
       // Then alphabetically by name
       return a.name.localeCompare(b.name)

@@ -66,39 +66,50 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     // Filter out bundles, equipment, tasting sets, and other unwanted items
     all_coffees.retain(|coffee| {
         let name_lower = coffee.name.to_lowercase();
-        
+
         // Filter out bundles and subscriptions
         if name_lower.contains("bundle") || name_lower.contains("subscription") {
             return false;
         }
-        
+
         // Filter out samples and tasting sets
         if name_lower.contains("sample") || name_lower.contains("taster") || name_lower.contains("tasting set") {
             return false;
         }
-        
+
         // Filter out equipment (V60, Chemex, filters, servers, etc.)
         if name_lower.contains("v60") || name_lower.contains("chemex") || name_lower.contains("filter")
-            || name_lower.contains("server") || name_lower.contains("mug") || name_lower.contains("cup")
-            || name_lower.contains("dripper") || name_lower.contains("brewer") || name_lower.contains("grinder")
-            || name_lower.contains("kettle") || name_lower.contains("tamper") || name_lower.contains("jug")
-            || name_lower.contains("carafe") || name_lower.contains("aeropress") || name_lower.contains("cafetiere")
-            || name_lower.contains("french press") || name_lower.contains("moka pot") || name_lower.contains("scales")
-            || name_lower.contains("thermometer") {
+            || name_lower.contains("paper") || name_lower.contains("server") || name_lower.contains("mug")
+            || name_lower.contains("cup") || name_lower.contains("dripper") || name_lower.contains("brewer")
+            || name_lower.contains("grinder") || name_lower.contains("kettle") || name_lower.contains("tamper")
+            || name_lower.contains("jug") || name_lower.contains("carafe") || name_lower.contains("aeropress")
+            || name_lower.contains("cafetiere") || name_lower.contains("french press") || name_lower.contains("moka pot")
+            || name_lower.contains("scales") || name_lower.contains("scale") || name_lower.contains("thermometer")
+            || name_lower.contains("pitcher") || name_lower.contains("bottle") || name_lower.contains("flask")
+            || name_lower.contains("pour over set") || name_lower.contains("brewing") || name_lower.contains("equipment")
+            || name_lower.contains("accessories") || name_lower.contains("storage") || name_lower.contains("canister")
+            || name_lower.contains("spoon") || name_lower.contains("scoop") || name_lower.contains("cloth")
+            || name_lower.contains("towel") || name_lower.contains("mat") || name_lower.contains("tray") {
             return false;
         }
-        
+
         // Filter out coffee pods
         if name_lower.contains(" pod") || name_lower.contains("pods") || name_lower.contains("capsule") {
             return false;
         }
-        
+
         // Filter out blends (conservatively - only if explicitly labeled)
         // We check for "blend" in name but NOT if it's part of another word like "blended"
         if name_lower.contains(" blend") || name_lower.starts_with("blend") || name_lower.ends_with("blend") {
             return false;
         }
-        
+
+        // Filter out gift items and merchandise
+        if name_lower.contains("gift card") || name_lower.contains("gift box") || name_lower.contains("voucher")
+            || name_lower.contains("merchandise") || name_lower.contains("t-shirt") || name_lower.contains("tote") {
+            return false;
+        }
+
         true
     });
 
