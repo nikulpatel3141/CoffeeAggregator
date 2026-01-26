@@ -39,6 +39,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     info!("Starting coffee scraper");
 
     let mut all_coffees = Vec::new();
+    let mut successfully_scraped_roasters = std::collections::HashSet::new();
 
     // Run all UK specialty coffee roaster scrapers
     let scraper_results = vec![
@@ -58,10 +59,23 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     for result in scraper_results {
         match result {
-            Ok(mut coffees) => all_coffees.append(&mut coffees),
-            Err(e) => tracing::error!("Scraper failed: {}", e),
+            Ok(mut coffees) => {
+                if !coffees.is_empty() {
+                    // Track which roaster succeeded by getting the roaster name from first coffee
+                    let roaster_name = coffees[0].roaster.clone();
+                    successfully_scraped_roasters.insert(roaster_name.clone());
+                    info!("✓ Successfully scraped {} products from {}", coffees.len(), roaster_name);
+                    all_coffees.append(&mut coffees);
+                } else {
+                    tracing::warn!("Scraper returned 0 products (may have failed silently)");
+                }
+            }
+            Err(e) => tracing::error!("✗ Scraper failed: {}", e),
         }
     }
+
+    info!("Successfully scraped {} total roasters", successfully_scraped_roasters.len());
+    info!("Roasters scraped: {:?}", successfully_scraped_roasters);
 
     // Filter out bundles, equipment, tasting sets, and other unwanted items
     all_coffees.retain(|coffee| {
@@ -182,8 +196,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
 
     info!("Successfully staged all {} coffees", all_coffees.len());
 
-    // Step 2: Delete old production data
-    info!("Clearing production coffee data");
+    // Step 2: Delete old production data (only for successfully scraped roasters)
+    info!("Clearing production coffee data for successfully scraped roasters");
 
     // Get all coffee objects from production (we don't need the document IDs for deletion)
     let prod_coffees: Vec<Coffee> = match db
@@ -202,10 +216,31 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     };
 
     if !prod_coffees.is_empty() {
-        info!("Deleting {} old production documents", prod_coffees.len());
+        // Filter to only delete products from roasters that were successfully scraped
+        let coffees_to_delete: Vec<&Coffee> = prod_coffees
+            .iter()
+            .filter(|c| successfully_scraped_roasters.contains(&c.roaster))
+            .collect();
 
-        // Delete all documents by recreating deterministic IDs
-        for coffee in &prod_coffees {
+        info!("Deleting {} old production documents from {} successfully scraped roasters",
+            coffees_to_delete.len(), successfully_scraped_roasters.len());
+
+        // Log which roasters are being preserved
+        let preserved_roasters: std::collections::HashSet<_> = prod_coffees
+            .iter()
+            .filter(|c| !successfully_scraped_roasters.contains(&c.roaster))
+            .map(|c| &c.roaster)
+            .collect();
+
+        if !preserved_roasters.is_empty() {
+            info!("Preserving {} products from {} roasters that weren't scraped this run: {:?}",
+                prod_coffees.len() - coffees_to_delete.len(),
+                preserved_roasters.len(),
+                preserved_roasters);
+        }
+
+        // Delete only the filtered documents by recreating deterministic IDs
+        for coffee in coffees_to_delete {
             let doc_id = format!(
                 "{}__{}",
                 coffee.roaster
@@ -230,7 +265,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
                 tracing::warn!("Failed to delete production document {}: {}", doc_id, e);
             }
         }
-        info!("Cleared production collection");
+        info!("Cleared production collection for successfully scraped roasters");
     } else {
         info!("No production data to clear");
     }
@@ -314,7 +349,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         }
     }
 
-    info!("Successfully updated production with {} coffees", staging_coffees.len());
+    info!("Successfully updated production with {} new coffees from {} roasters",
+        staging_coffees.len(), successfully_scraped_roasters.len());
 
     info!("Scraping completed");
     Ok(())
