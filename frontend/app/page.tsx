@@ -109,6 +109,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(50)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchCoffees()
@@ -268,13 +269,97 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6">
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Mobile Slide-out Menu */}
+        <div className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-400">Menu</h2>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label="Close menu"
+              >
+                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Navigation */}
+            <nav className="space-y-2 mb-6">
+              <button
+                onClick={() => { setActiveTab('coffees'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === 'coffees'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                Coffee List
+              </button>
+              <button
+                onClick={() => { setActiveTab('subscriptions'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === 'subscriptions'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                Subscriptions
+              </button>
+              <button
+                onClick={() => { setActiveTab('readme'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === 'readme'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                About
+              </button>
+            </nav>
+
+            {/* Dark Mode Toggle in Mobile Menu */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={toggleDarkMode}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+              >
+                {isDarkMode ? (
+                  <>
+                    <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                    </svg>
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                    </svg>
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
         <header className="mb-6 md:mb-8">
           <div className="flex flex-col gap-4 mb-4">
-            <div className="flex justify-between items-start gap-4">
+            <div className="flex justify-between items-center gap-2">
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-2 sm:gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0">
+                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-amber-900 dark:text-amber-400 mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 flex-shrink-0">
                     <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
                     <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
                     <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
@@ -282,15 +367,18 @@ export default function Home() {
                     <path d="M16 10 Q16 8, 17 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
                     <path d="M20 11 Q20 9, 21 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
                   </svg>
-                  <span className="break-words">UK Specialty Coffee Tracker</span>
+                  <span className="hidden sm:inline">UK Specialty Coffee Tracker</span>
+                  <span className="sm:hidden">UK Coffee Tracker</span>
                 </h1>
-                <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base md:text-lg">
-                  Discover specialty coffee from top UK roasters, visualized by origin region
+                <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm md:text-lg hidden sm:block">
+                  Discover specialty coffee from top UK roasters
                 </p>
               </div>
+
+              {/* Desktop: Dark mode toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
+                className="hidden md:block p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
                 aria-label="Toggle dark mode"
               >
                 {isDarkMode ? (
@@ -303,12 +391,24 @@ export default function Home() {
                   </svg>
                 )}
               </button>
+
+              {/* Mobile: Hamburger menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
+                aria-label="Open menu"
+              >
+                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
             </div>
-            {/* Tab Navigation */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+
+            {/* Desktop Tab Navigation */}
+            <div className="hidden md:flex gap-2">
               <button
                 onClick={() => setActiveTab('coffees')}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'coffees'
                     ? 'bg-amber-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -318,7 +418,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('subscriptions')}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'subscriptions'
                     ? 'bg-amber-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -328,10 +428,44 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('readme')}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'readme'
                     ? 'bg-amber-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                About
+              </button>
+            </div>
+
+            {/* Mobile Tab Pills (compact, below title) */}
+            <div className="flex md:hidden gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+              <button
+                onClick={() => setActiveTab('coffees')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                  activeTab === 'coffees'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Coffees
+              </button>
+              <button
+                onClick={() => setActiveTab('subscriptions')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                  activeTab === 'subscriptions'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Subs
+              </button>
+              <button
+                onClick={() => setActiveTab('readme')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                  activeTab === 'readme'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}
               >
                 About
