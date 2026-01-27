@@ -192,17 +192,32 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
 }
 
 async fn copy_frontend_to_website() -> Result<()> {
-    // Use the frontend from the GitHub Actions workspace (parent of builder directory)
-    // This ensures we use the exact code that was checked out, not a separate clone
-    let source = "../frontend";
+    // Try multiple possible locations for the frontend directory
+    // 1. GITHUB_WORKSPACE env var (set by GitHub Actions)
+    // 2. Relative path from builder directory (../frontend)
+    // 3. Current directory's frontend subdirectory
+
+    let possible_paths = vec![
+        std::env::var("GITHUB_WORKSPACE")
+            .map(|ws| format!("{}/frontend", ws))
+            .unwrap_or_default(),
+        "../frontend".to_string(),
+        "./frontend".to_string(),
+        "frontend".to_string(),
+    ];
+
+    let source = possible_paths
+        .iter()
+        .find(|p| !p.is_empty() && std::path::Path::new(p).exists())
+        .ok_or_else(|| anyhow::anyhow!(
+            "Frontend source directory not found. Tried: {:?}. GITHUB_WORKSPACE={:?}",
+            possible_paths,
+            std::env::var("GITHUB_WORKSPACE")
+        ))?;
+
     let dest = "/tmp/coffee-tracker-repo";
 
-    info!("Copying from {} to {}", source, dest);
-
-    // Verify source exists
-    if !std::path::Path::new(source).exists() {
-        anyhow::bail!("Frontend source directory not found at {}", source);
-    }
+    info!("Copying frontend from {} to {}", source, dest);
 
     // Copy frontend contents directly to root of website repo (not in a subdirectory)
     // This means package.json, app/, components/, etc. go to the root
