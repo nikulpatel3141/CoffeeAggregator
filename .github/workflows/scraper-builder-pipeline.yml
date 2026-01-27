@@ -8,6 +8,15 @@ on:
   # Allow manual triggering
   workflow_dispatch:
 
+  # Also run on push to main to pick up code changes immediately
+  push:
+    branches:
+      - main
+    paths:
+      - 'scraper/**'
+      - 'builder/**'
+      - 'common/**'
+
 jobs:
   scrape:
     name: Scrape Coffee Data
@@ -20,16 +29,8 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: scraper
-          # Include source file hash in cache key to ensure recompilation when code changes
-          shared-key: scraper-${{ hashFiles('scraper/src/**/*.rs', 'common/src/**/*.rs') }}
-
-      # Force recompilation of binaries to ensure code changes are reflected
-      - name: Clear cached binaries
-        run: rm -rf scraper/target/release/coffee-scraper scraper/target/release/deps/coffee_scraper* || true
+      # Disable caching to ensure code changes are always reflected
+      # The build only takes ~2 minutes so caching isn't worth the debugging headaches
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -57,16 +58,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: builder
-          # Include source file hash in cache key to ensure recompilation when code changes
-          shared-key: builder-${{ hashFiles('builder/src/**/*.rs', 'common/src/**/*.rs') }}
-
-      # Force recompilation of binaries to ensure code changes are reflected
-      - name: Clear cached binaries
-        run: rm -rf builder/target/release/builder builder/target/release/deps/builder* || true
+      # Disable caching to ensure code changes are always reflected
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
