@@ -45,7 +45,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     let scraper_results = vec![
         scrape_origin_coffee().await,
         scrape_rave_coffee().await,
-        scrape_has_bean().await,
+        scrape_ozone_coffee().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
         scrape_volcano().await,
@@ -55,6 +55,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_monmouth().await,
         scrape_gotham().await,
         scrape_coffee_compass().await,
+        scrape_ue_coffee().await,
+        scrape_kiss_the_hippo().await,
     ];
 
     for result in scraper_results {
@@ -560,17 +562,17 @@ async fn scrape_shopify_json(
     Ok(coffees)
 }
 
-async fn scrape_has_bean() -> Result<Vec<Coffee>> {
-    info!("Scraping Has Bean Coffee");
+async fn scrape_ozone_coffee() -> Result<Vec<Coffee>> {
+    info!("Scraping Ozone Coffee");
 
     // Try Shopify JSON API first
-    let json_url = "https://www.hasbean.co.uk/collections/coffee/products.json";
-    match scrape_shopify_json(json_url, "Has Bean Coffee", "https://www.hasbean.co.uk").await {
+    let json_url = "https://ozonecoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Ozone Coffee", "https://ozonecoffee.co.uk").await {
         Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
         _ => {
             // Fallback to HTML scraping
-            let url = "https://www.hasbean.co.uk/collections/coffee";
-            scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
+            let url = "https://ozonecoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Ozone Coffee", "https://ozonecoffee.co.uk").await
         }
     }
 }
@@ -993,4 +995,34 @@ async fn scrape_coffee_compass() -> Result<Vec<Coffee>> {
 
     let url = "https://www.coffeecompass.co.uk/collections/roasted-origin-coffee";
     scrape_shopify_store(url, "Coffee Compass", "https://www.coffeecompass.co.uk").await
+}
+
+async fn scrape_ue_coffee() -> Result<Vec<Coffee>> {
+    info!("Scraping UE Coffee Roasters");
+
+    // Try Shopify JSON API first
+    let json_url = "https://www.uecoffeeroasters.com/collections/single-origin/products.json";
+    match scrape_shopify_json(json_url, "UE Coffee Roasters", "https://www.uecoffeeroasters.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.uecoffeeroasters.com/collections/single-origin";
+            scrape_shopify_store(url, "UE Coffee Roasters", "https://www.uecoffeeroasters.com").await
+        }
+    }
+}
+
+async fn scrape_kiss_the_hippo() -> Result<Vec<Coffee>> {
+    info!("Scraping Kiss the Hippo");
+
+    // Try Shopify JSON API first
+    let json_url = "https://kissthehippo.com/collections/coffee-bags/products.json";
+    match scrape_shopify_json(json_url, "Kiss the Hippo", "https://kissthehippo.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://kissthehippo.com/collections/coffee-bags";
+            scrape_shopify_store(url, "Kiss the Hippo", "https://kissthehippo.com").await
+        }
+    }
 }

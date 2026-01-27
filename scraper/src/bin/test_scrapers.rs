@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
     let roasters = vec![
         ("Origin Coffee", "https://www.origincoffee.co.uk/collections/coffee", "https://www.origincoffee.co.uk"),
         ("Rave Coffee", "https://ravecoffee.co.uk/collections/coffee", "https://ravecoffee.co.uk"),
-        ("Has Bean", "https://www.hasbean.co.uk/collections/coffee", "https://www.hasbean.co.uk"),
+        ("Ozone Coffee", "https://ozonecoffee.co.uk/collections/coffee", "https://ozonecoffee.co.uk"),
         ("Dark Arts", "https://www.darkartscoffee.co.uk/collections/coffee", "https://www.darkartscoffee.co.uk"),
         ("Round Hill", "https://www.roundhillroastery.com/collections/coffee", "https://www.roundhillroastery.com"),
         ("Volcano Coffee", "https://volcanocoffeeworks.com/collections/all-coffee", "https://volcanocoffeeworks.com"),
@@ -27,6 +27,8 @@ async fn main() -> Result<()> {
         ("Monmouth Coffee", "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/", "https://www.monmouthcoffee.co.uk"),
         ("Gotham Coffee", "https://gothamcoffee.com/collections/arabica-origin-coffee", "https://gothamcoffee.com"),
         ("Coffee Compass", "https://www.coffeecompass.co.uk/collections/roasted-origin-coffee", "https://www.coffeecompass.co.uk"),
+        ("UE Coffee Roasters", "https://www.uecoffeeroasters.com/collections/single-origin", "https://www.uecoffeeroasters.com"),
+        ("Kiss the Hippo", "https://kissthehippo.com/collections/coffee-bags", "https://kissthehippo.com"),
     ];
 
     for (name, url, base_url) in &roasters {
