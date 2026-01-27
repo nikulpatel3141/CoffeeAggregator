@@ -54,18 +54,13 @@ async fn run_build() -> Result<()> {
 
     info!("Found {} coffees", coffees.len());
 
-    // Clone main repo to get frontend source
-    info!("Cloning main repository for frontend source");
-    let source_repo = "github.com/nikulpatel3141/CoffeeAggregator";
-    let source_branch = "main"; // Clone from main branch
-    clone_source_repo(&github_token, source_repo, source_branch).await?;
-
     // Clone or update the website deployment repository
     info!("Setting up website deployment repository");
     setup_git_repo(&github_token, &website_repo_url, &target_branch).await?;
 
-    // Copy frontend source from main repo to website repo
-    info!("Copying frontend source code");
+    // Copy frontend source from the workspace (already checked out by GitHub Actions)
+    // This ensures we use the exact same code that triggered the pipeline
+    info!("Copying frontend source code from workspace");
     copy_frontend_to_website().await?;
 
     // Export data to JSON files
@@ -196,36 +191,18 @@ async fn clone_repo(github_token: &str, repo_url: &str, repo_path: &str, target_
     Ok(())
 }
 
-async fn clone_source_repo(github_token: &str, repo_url: &str, branch: &str) -> Result<()> {
-    let source_path = "/tmp/coffee-source-repo";
-    let auth_url = format!("https://x-access-token:{}@{}", github_token, repo_url);
-
-    // Remove if exists
-    if std::path::Path::new(source_path).exists() {
-        std::fs::remove_dir_all(source_path)?;
-    }
-
-    // Clone the main repo with specific branch
-    let output = Command::new("git")
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GIT_ASKPASS", "echo")
-        .args(&["clone", "--branch", branch, &auth_url, source_path])
-        .output()?;
-
-    if !output.status.success() {
-        anyhow::bail!(
-            "Failed to clone source repository: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-
-    info!("Source repository cloned successfully");
-    Ok(())
-}
-
 async fn copy_frontend_to_website() -> Result<()> {
-    let source = "/tmp/coffee-source-repo/frontend";
+    // Use the frontend from the GitHub Actions workspace (parent of builder directory)
+    // This ensures we use the exact code that was checked out, not a separate clone
+    let source = "../frontend";
     let dest = "/tmp/coffee-tracker-repo";
+
+    info!("Copying from {} to {}", source, dest);
+
+    // Verify source exists
+    if !std::path::Path::new(source).exists() {
+        anyhow::bail!("Frontend source directory not found at {}", source);
+    }
 
     // Copy frontend contents directly to root of website repo (not in a subdirectory)
     // This means package.json, app/, components/, etc. go to the root
