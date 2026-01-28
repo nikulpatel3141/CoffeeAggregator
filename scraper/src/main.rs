@@ -45,7 +45,7 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
     let scraper_results = vec![
         scrape_origin_coffee().await,
         scrape_rave_coffee().await,
-        scrape_has_bean().await,
+        scrape_ozone_coffee().await,
         scrape_dark_arts().await,
         scrape_round_hill().await,
         scrape_volcano().await,
@@ -55,6 +55,8 @@ async fn run_scraper(db: &FirestoreDb) -> Result<()> {
         scrape_monmouth().await,
         scrape_gotham().await,
         scrape_coffee_compass().await,
+        scrape_ue_coffee().await,
+        scrape_kiss_the_hippo().await,
     ];
 
     for result in scraper_results {
@@ -560,17 +562,17 @@ async fn scrape_shopify_json(
     Ok(coffees)
 }
 
-async fn scrape_has_bean() -> Result<Vec<Coffee>> {
-    info!("Scraping Has Bean Coffee");
+async fn scrape_ozone_coffee() -> Result<Vec<Coffee>> {
+    info!("Scraping Ozone Coffee");
 
     // Try Shopify JSON API first
-    let json_url = "https://www.hasbean.co.uk/collections/coffee/products.json";
-    match scrape_shopify_json(json_url, "Has Bean Coffee", "https://www.hasbean.co.uk").await {
+    let json_url = "https://ozonecoffee.co.uk/collections/coffee/products.json";
+    match scrape_shopify_json(json_url, "Ozone Coffee", "https://ozonecoffee.co.uk").await {
         Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
         _ => {
             // Fallback to HTML scraping
-            let url = "https://www.hasbean.co.uk/collections/coffee";
-            scrape_shopify_store(url, "Has Bean Coffee", "https://www.hasbean.co.uk").await
+            let url = "https://ozonecoffee.co.uk/collections/coffee";
+            scrape_shopify_store(url, "Ozone Coffee", "https://ozonecoffee.co.uk").await
         }
     }
 }
@@ -868,6 +870,126 @@ async fn scrape_shopify_store(
     Ok(coffees)
 }
 
+async fn scrape_woocommerce_store(
+    collection_url: &str,
+    roaster_name: &str,
+    base_url: &str,
+) -> Result<Vec<Coffee>> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    let response = client
+        .get(collection_url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .header("Referer", base_url)
+        .send()
+        .await?;
+
+    let body = response.text().await?;
+    let document = Html::parse_document(&body);
+
+    // WooCommerce-specific selectors
+    let product_selectors = vec![
+        ".product",
+        ".type-product",
+        "li.product",
+        ".products > li",
+        ".woocommerce-loop-product",
+        "[class*='product-type']",
+    ];
+
+    let mut coffees = Vec::new();
+
+    for selector_str in product_selectors {
+        if let Ok(product_selector) = Selector::parse(selector_str) {
+            for product in document.select(&product_selector) {
+                let name = [
+                    ".woocommerce-loop-product__title",
+                    "h2.woocommerce-loop-product__title",
+                    ".product-title",
+                    ".woocommerce-LoopProduct-title",
+                    "h2",
+                    "h3",
+                    ".title",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
+                        })
+                    })
+                })
+                .unwrap_or_default();
+
+                if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
+                    continue;
+                }
+
+                let price = [
+                    ".woocommerce-Price-amount",
+                    ".price",
+                    "span.price",
+                    ".amount",
+                    "bdi",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
+                        })
+                    })
+                });
+
+                let product_url = [
+                    "a.woocommerce-LoopProduct-link",
+                    "a.woocommerce-loop-product__link",
+                    "a",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().and_then(|e| e.value().attr("href"))
+                    })
+                })
+                .map(|href| {
+                    if href.starts_with("http") {
+                        href.to_string()
+                    } else {
+                        format!("{}{}", base_url, href)
+                    }
+                })
+                .unwrap_or_else(|| collection_url.to_string());
+
+                let (origin, region) = extract_origin_from_name(&name);
+
+                coffees.push(Coffee {
+                    name,
+                    roaster: roaster_name.to_string(),
+                    origin,
+                    region,
+                    tasting_notes: Vec::new(),
+                    price,
+                    weight: None,
+                    url: product_url,
+                    in_stock: true,
+                    scraped_at: Utc::now().to_rfc3339(),
+                });
+            }
+
+            if !coffees.is_empty() {
+                break;
+            }
+        }
+    }
+
+    Ok(coffees)
+}
+
 async fn scrape_rave_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Rave Coffee");
 
@@ -976,9 +1098,9 @@ async fn scrape_hermanos() -> Result<Vec<Coffee>> {
 async fn scrape_monmouth() -> Result<Vec<Coffee>> {
     info!("Scraping Monmouth Coffee");
 
-    // WooCommerce store - use generic scraper
+    // WooCommerce store - use WooCommerce scraper
     let url = "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/";
-    scrape_shopify_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
+    scrape_woocommerce_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
 }
 
 async fn scrape_gotham() -> Result<Vec<Coffee>> {
@@ -993,4 +1115,34 @@ async fn scrape_coffee_compass() -> Result<Vec<Coffee>> {
 
     let url = "https://www.coffeecompass.co.uk/collections/roasted-origin-coffee";
     scrape_shopify_store(url, "Coffee Compass", "https://www.coffeecompass.co.uk").await
+}
+
+async fn scrape_ue_coffee() -> Result<Vec<Coffee>> {
+    info!("Scraping UE Coffee Roasters");
+
+    // Try Shopify JSON API first
+    let json_url = "https://www.uecoffeeroasters.com/collections/single-origin/products.json";
+    match scrape_shopify_json(json_url, "UE Coffee Roasters", "https://www.uecoffeeroasters.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://www.uecoffeeroasters.com/collections/single-origin";
+            scrape_shopify_store(url, "UE Coffee Roasters", "https://www.uecoffeeroasters.com").await
+        }
+    }
+}
+
+async fn scrape_kiss_the_hippo() -> Result<Vec<Coffee>> {
+    info!("Scraping Kiss the Hippo");
+
+    // Try Shopify JSON API first
+    let json_url = "https://kissthehippo.com/collections/coffee-bags/products.json";
+    match scrape_shopify_json(json_url, "Kiss the Hippo", "https://kissthehippo.com").await {
+        Ok(coffees) if !coffees.is_empty() => return Ok(coffees),
+        _ => {
+            // Fallback to HTML scraping
+            let url = "https://kissthehippo.com/collections/coffee-bags";
+            scrape_shopify_store(url, "Kiss the Hippo", "https://kissthehippo.com").await
+        }
+    }
 }

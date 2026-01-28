@@ -106,13 +106,18 @@ export default function ReadmeTab() {
               {[
                 'Origin Coffee',
                 'Rave Coffee',
-                'Has Bean',
+                'Ozone Coffee',
                 'Dark Arts Coffee',
                 'Round Hill Roastery',
                 'Volcano Coffee Works',
                 'Balance Coffee',
                 'Union Coffee Roasters',
                 'Hermanos Coffee',
+                'Monmouth Coffee',
+                'Gotham Coffee',
+                'Coffee Compass',
+                'UE Coffee Roasters',
+                'Kiss the Hippo',
               ].map((roaster) => (
                 <div
                   key={roaster}
@@ -121,6 +126,47 @@ export default function ReadmeTab() {
                   {roaster}
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-2xl font-semibold text-amber-800 dark:text-amber-300 mb-3">
+              🤦 Development Blunders
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-4">
+              Building with AI doesn't mean everything goes smoothly! Here are some memorable mistakes made during development:
+            </p>
+            <div className="space-y-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">🔓 Accidental Public GCP Endpoints</h4>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  Initially deployed the scraper API without authentication, making it publicly accessible. Anyone could have triggered expensive scraping jobs or accessed internal endpoints. Fixed by adding proper IAM authentication.
+                </p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">💾 Aggressive Rust Binary Caching</h4>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  GitHub Actions cached compiled Rust binaries based only on Cargo.lock. When source code changed but dependencies didn't, stale binaries were used. Took multiple debugging sessions to realize code changes weren't being deployed. Fixed by removing caching entirely.
+                </p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">📦 Vercel Build Cache Nightmare</h4>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  Even after fixing the Rust caching, the website wouldn't update. Turned out Vercel was caching the old frontend build. Required manually clearing the Vercel build cache to see changes.
+                </p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">🔄 Builder Cloning Wrong Repo</h4>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  The builder service cloned the source repo separately instead of using the already checked-out code. This caused it to sometimes use stale code or fail due to token permissions. Fixed by using GITHUB_WORKSPACE directly.
+                </p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-2">☕ Filtering "Filter Roast" Coffees</h4>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  Equipment filtering used the word "filter" to remove V60 papers and filter equipment, but accidentally filtered out legitimate "Filter Roast" coffees. Fixed by being more specific with equipment keywords.
+                </p>
+              </div>
             </div>
           </div>
 

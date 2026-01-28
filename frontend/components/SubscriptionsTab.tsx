@@ -15,10 +15,10 @@ export default function SubscriptionsTab() {
       notes: 'Free delivery, choose your roast level',
     },
     {
-      roaster: 'Has Bean',
-      url: 'https://www.hasbean.co.uk/collections/subscriptions',
-      price: '£9.00',
-      notes: 'Curated selections, detailed tasting notes',
+      roaster: 'Ozone Coffee',
+      url: 'https://ozonecoffee.co.uk/collections/subscriptions',
+      price: '£10.50',
+      notes: 'London-based roaster, sustainability focused',
     },
     {
       roaster: 'Dark Arts Coffee',
@@ -55,6 +55,18 @@ export default function SubscriptionsTab() {
       url: 'https://www.coffeecompass.co.uk/collections/subscriptions',
       price: '£9.75',
       notes: 'Small batch roasting, ethically sourced',
+    },
+    {
+      roaster: 'UE Coffee Roasters',
+      url: 'https://www.uecoffeeroasters.com/collections/subscriptions',
+      price: '£9.50',
+      notes: 'Award-winning Witney roaster, precise roasting',
+    },
+    {
+      roaster: 'Kiss the Hippo',
+      url: 'https://kissthehippo.com/collections/subscriptions',
+      price: '£11.00',
+      notes: 'Carbon-negative, specialty focus',
     },
   ]
 
