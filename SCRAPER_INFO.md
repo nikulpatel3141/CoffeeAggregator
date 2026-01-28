@@ -2,171 +2,112 @@
 
 ## Overview
 
-The scraper has been optimized to work with UK specialty coffee roasters. Most of these roasters use Shopify, so the scraper uses a generic Shopify scraper function that tries multiple common selectors.
+The scraper aggregates coffee data from 14 UK specialty roasters. Most use Shopify, so the scraper uses a dual-approach strategy:
+1. **Shopify JSON API** (`/products.json`) - Fast, structured data when available
+2. **HTML Scraping** - Fallback with flexible selectors for compatibility
 
-## Implemented Scrapers
+## Currently Tracking (14 Roasters)
 
-### 1. **Pact Coffee** (https://www.pactcoffee.com/coffees)
-- Custom scraper with React-specific selectors
-- Extracts: name, price, origin from product name
-- Example data:
-  ```json
-  {
-    "name": "Ethiopia Guji Hambela",
-    "roaster": "Pact Coffee",
-    "origin": "Ethiopia",
-    "region": "Ethiopia",
-    "price": "£9.00",
-    "url": "https://www.pactcoffee.com/coffees/ethiopia-guji-hambela"
-  }
-  ```
-
-### 2. **Origin Coffee** (https://www.origincoffee.co.uk/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Kenya Kiambu",
-    "roaster": "Origin Coffee",
-    "origin": "Kenya",
-    "region": "Kenya",
-    "price": "£11.50",
-    "url": "https://www.origincoffee.co.uk/products/kenya-kiambu"
-  }
-  ```
-
-### 3. **Rave Coffee** (https://ravecoffee.co.uk/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Ethiopia Sidamo",
-    "roaster": "Rave Coffee",
-    "origin": "Ethiopia",
-    "region": "Ethiopia",
-    "price": "£8.95",
-    "url": "https://ravecoffee.co.uk/products/ethiopia-sidamo"
-  }
-  ```
-
-### 4. **Square Mile Coffee** (https://shop.squaremilecoffee.com/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Red Brick Seasonal Espresso",
-    "roaster": "Square Mile Coffee",
-    "origin": "Blend",
-    "region": "Central America",
-    "price": "£12.50",
-    "url": "https://shop.squaremilecoffee.com/products/red-brick"
-  }
-  ```
-
-### 5. **Has Bean Coffee** (https://www.hasbean.co.uk/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Rwanda Ruli Mountain",
-    "roaster": "Has Bean Coffee",
-    "origin": "Rwanda",
-    "region": "Rwanda",
-    "price": "£9.50",
-    "url": "https://www.hasbean.co.uk/products/rwanda-ruli-mountain"
-  }
-  ```
-
-### 6. **Assembly Coffee** (https://www.assemblycoffee.co.uk/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "House Espresso",
-    "roaster": "Assembly Coffee",
-    "origin": "Blend",
-    "region": "South America",
-    "price": "£9.00",
-    "url": "https://www.assemblycoffee.co.uk/products/house-espresso"
-  }
-  ```
-
-### 7. **Dark Arts Coffee** (https://www.darkartscoffee.co.uk/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Guatemala Los Alpes",
-    "roaster": "Dark Arts Coffee",
-    "origin": "Guatemala",
-    "region": "Guatemala",
-    "price": "£11.00",
-    "url": "https://www.darkartscoffee.co.uk/products/guatemala-los-alpes"
-  }
-  ```
-
-### 8. **Round Hill Roastery** (https://www.roundhillroastery.com/collections/coffee)
-- Uses generic Shopify scraper
-- Shopify-based store
-- Example data:
-  ```json
-  {
-    "name": "Peru Cajamarca",
-    "roaster": "Round Hill Roastery",
-    "origin": "Peru",
-    "region": "Peru",
-    "price": "£8.00",
-    "url": "https://www.roundhillroastery.com/products/peru-cajamarca"
-  }
-  ```
+| Roaster | Platform | Approach |
+|---------|----------|----------|
+| Origin Coffee | Shopify | JSON API + HTML fallback |
+| Rave Coffee | Shopify | JSON API + HTML fallback |
+| Ozone Coffee | Shopify | JSON API + HTML fallback |
+| Dark Arts Coffee | Shopify | JSON API + HTML fallback |
+| Round Hill Roastery | Shopify | JSON API + HTML fallback |
+| Volcano Coffee Works | Shopify | JSON API + HTML fallback |
+| Balance Coffee | Shopify | JSON API + HTML fallback |
+| Union Coffee Roasters | Shopify | JSON API + HTML fallback |
+| Hermanos Coffee | Shopify | HTML only |
+| Monmouth Coffee | WooCommerce | Custom scraper (product pages) |
+| Gotham Coffee | Shopify | HTML only |
+| Coffee Compass | Shopify | HTML only |
+| UE Coffee Roasters | Shopify | JSON API + HTML fallback |
+| Kiss the Hippo | Shopify | JSON API + HTML fallback |
 
 ## How the Scrapers Work
 
-### Generic Shopify Scraper
-Most UK coffee roasters use Shopify. The generic scraper:
-1. Tries multiple product selectors (`.grid__item`, `.product-item`, `.product-card`, etc.)
-2. Extracts product name from various heading selectors
-3. Extracts price from `.price`, `.money`, or similar classes
-4. Builds full product URLs
-5. Automatically detects origin/region from product names
+### Shopify JSON API (Primary)
 
-### Origin Detection
-The scraper includes a smart origin detector that looks for country names in product titles:
-- **Supported origins**: Ethiopia, Kenya, Colombia, Brazil, Guatemala, Rwanda, Burundi, Peru, Honduras, Costa Rica, El Salvador, Nicaragua, Panama, Mexico, Indonesia, Yemen, Tanzania, Uganda
+Most Shopify stores expose a JSON API at `/collections/{collection}/products.json`:
 
-When a product name contains "Ethiopia Guji", the scraper automatically sets:
-- `origin: "Ethiopia"`
-- `region: "Ethiopia"`
+```rust
+async fn scrape_shopify_json(json_url: &str, roaster_name: &str, base_url: &str) -> Result<Vec<Coffee>>
+```
 
-### Features
-- **Deduplication**: Prevents duplicate products by checking names
-- **User Agent**: Uses realistic browser user agent to avoid blocks
-- **Flexible Selectors**: Tries multiple selector patterns to accommodate different Shopify themes
-- **Full URLs**: Constructs complete product URLs for easy navigation
-- **Error Handling**: Gracefully handles failures for individual scrapers
+This extracts:
+- Product name, price, URL
+- Tasting notes from tags
+- Origin/region from product name
+- Weight from variant information
 
-## Testing in Production
+### HTML Scraping (Fallback)
 
-To test the scrapers:
-1. Deploy to Cloud Run
-2. Trigger manual scrape: `curl -X POST <cloud-run-url>/`
-3. Check Firestore for results
-4. Verify data via API: `curl <cloud-run-url>/api/coffees`
+When JSON API fails or isn't available:
+
+```rust
+async fn scrape_shopify_store(collection_url: &str, roaster_name: &str, base_url: &str) -> Result<Vec<Coffee>>
+```
+
+Uses multiple CSS selectors:
+- Products: `.grid__item`, `.product-item`, `.product-card`, etc.
+- Names: `h2`, `h3`, `.product-title`, `.card__title`, etc.
+- Prices: `.price`, `.money`, `span[class*='price']`, etc.
+
+### Custom Scrapers
+
+Some sites need custom handling:
+
+**Monmouth Coffee (WooCommerce)**
+- Fetches individual product pages
+- Extracts country/origin from page text
+- Parses tasting notes from descriptions
+- Normalizes prices to per 250g
+
+## Origin Detection
+
+The scraper automatically detects coffee origins from product names:
+
+```
+"Ethiopia Guji Hambela" → origin: "Ethiopia", region: "Ethiopia"
+"Kenya Kiambu AA" → origin: "Kenya", region: "Kenya"
+"Colombia Las Margaritas" → origin: "Colombia", region: "Colombia"
+```
+
+Supported origins: Ethiopia, Kenya, Colombia, Brazil, Guatemala, Rwanda, Burundi, Peru, Honduras, Costa Rica, El Salvador, Nicaragua, Panama, Mexico, Indonesia, Yemen, Tanzania, Uganda, India, Bolivia, Ecuador, Papua New Guinea, Malawi, Zambia, DR Congo
+
+## Tasting Notes Extraction
+
+For Shopify JSON, tasting notes are extracted from product tags:
+- Tags like "chocolate", "citrus", "berry" are collected
+- Maximum 5 notes per coffee
+
+For HTML/custom scrapers, notes are parsed from product descriptions.
+
+## Equipment Filtering
+
+The scraper filters out non-coffee products using specific keywords:
+- "grinder", "machine", "kettle", "scales"
+- "paper filter", "filter paper", "v60 paper"
+- "gift card", "subscription box", "merchandise"
+
+Note: Generic "filter" was removed to avoid filtering legitimate "Filter Roast" coffees.
+
+## Testing
+
+Run the test scraper locally:
+
+```bash
+cd scraper
+cargo run --bin test_scrapers
+# Results saved to scraped_coffees.json
+```
 
 ## Maintenance
 
 When website structures change:
-1. Check the `scrape_shopify_store` function in `main.rs`
-2. Add new selectors to the `product_selectors`, name selector, or price selector arrays
-3. For non-Shopify sites, create custom scraper functions (see `scrape_pact_coffee` as example)
-4. Update `extract_origin_from_name` to add new coffee-producing regions
-
-## Sample Data
-
-Full sample data for all roasters is available in `sample_data.json`
+1. Check if JSON API is still available
+2. Update CSS selectors in `scrape_shopify_store` if needed
+3. For new roasters, add a function following the pattern in `main.rs`
+4. Update `extract_origin_from_name` for new coffee regions
+5. Test with `cargo run --bin test_scrapers`

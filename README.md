@@ -1,123 +1,76 @@
-# UK Coffee Tracker
+# UK Coffee Aggregator
 
-Track specialty coffee offerings across UK specialty roasters' websites, visualized on an interactive map.
+Aggregates specialty coffee offerings from UK roasters, visualized on an interactive map. Built entirely with [Claude Code](https://github.com/anthropics/claude-code).
+
+**Live site**: [View the aggregator](https://github.com/nikulpatel3141/CoffeeAggregator)
 
 ## Features
 
-- **Interactive Map View**: Coffees grouped by origin region on an interactive world map
-- **Advanced Filtering**: Filter by roaster, region, price, tasting notes
-- **Daily Auto-Updates**: Fresh data every day via automated scraping
-- **Static & Fast**: Globally distributed via Vercel CDN
-- **8 UK Roasters**:
-  - Pact Coffee
+- **Interactive Map**: Coffees grouped by origin region on an interactive world map
+- **Advanced Filtering**: Filter by roaster, region, price range, tasting notes
+- **Daily Auto-Updates**: Fresh data every day via automated GitHub Actions pipeline
+- **Mobile Responsive**: Collapsible map, hamburger menu, optimized for all devices
+- **Dark Mode**: System preference detection with manual toggle
+- **14 UK Roasters**:
   - Origin Coffee
   - Rave Coffee
-  - Square Mile Coffee
-  - Has Bean Coffee
-  - Assembly Coffee
+  - Ozone Coffee
   - Dark Arts Coffee
   - Round Hill Roastery
+  - Volcano Coffee Works
+  - Balance Coffee
+  - Union Coffee Roasters
+  - Hermanos Coffee
+  - Monmouth Coffee
+  - Gotham Coffee
+  - Coffee Compass
+  - UE Coffee Roasters
+  - Kiss the Hippo
 
 ## Architecture
 
 ```
-┌──────────┐     ┌───────────┐     ┌─────────┐     ┌────────┐     ┌────────┐
-│ Scraper  │────▶│ Firestore │────▶│ Builder │────▶│ GitHub │────▶│ Vercel │
-│(Cloud Run)│     │           │     │(Cloud Run)│     │        │     │(Static)│
-└──────────┘     └───────────┘     └─────────┘     └────────┘     └────────┘
-  6 AM UK          Database           7 AM UK        Auto-commit    Auto-deploy
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         GitHub Actions Pipeline                          │
+│  ┌──────────┐     ┌───────────┐     ┌─────────┐     ┌────────────────┐  │
+│  │ Scraper  │────▶│ Firestore │────▶│ Builder │────▶│ Website Repo   │  │
+│  │  (Rust)  │     │           │     │  (Rust) │     │ (Auto-commit)  │  │
+│  └──────────┘     └───────────┘     └─────────┘     └────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                                              │
+                                                              ▼
+                                                        ┌──────────┐
+                                                        │  Vercel  │
+                                                        │ (Deploy) │
+                                                        └──────────┘
 ```
 
-1. **Scraper**: Runs daily at 6 AM UK, scrapes 8 roasters → Firestore
-2. **Builder**: Runs daily at 7 AM UK, exports JSON → commits to GitHub
-3. **Vercel**: Auto-deploys on GitHub push → serves static site globally
+1. **GitHub Actions**: Runs daily at 6 AM UK, triggers scraping and building
+2. **Scraper**: Scrapes 14 roasters using Shopify JSON API + HTML fallback → saves to Firestore
+3. **Builder**: Exports Firestore data to JSON → commits to website repository
+4. **Vercel**: Auto-deploys on GitHub push → serves static site globally
 
 ## Tech Stack
 
-- **Scraper**: Rust + Shopify scraper (Cloud Run)
-- **Builder**: Rust + Git automation (Cloud Run)
-- **Frontend**: Next.js + Leaflet maps + Tailwind CSS
-- **Database**: Firestore (temporary storage)
-- **Infrastructure**: Terraform (GCP)
+- **Scraper**: Rust + reqwest + scraper (HTML parsing)
+- **Builder**: Rust + Firestore SDK + Git automation
+- **Frontend**: Next.js 14 + React + TypeScript + Tailwind CSS
+- **Maps**: Pigeon Maps (OpenStreetMap)
+- **Database**: Firestore (temporary storage between scrape and build)
+- **CI/CD**: GitHub Actions
 - **Hosting**: Vercel (frontend CDN)
-- **Automation**: Cloud Scheduler
 
 ## Quick Start
 
-```bash
-# 1. Deploy GCP infrastructure
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-terraform init && terraform apply
-
-# 2. Build and deploy services
-cd ../scraper && ./build.sh $PROJECT_ID
-cd ../builder && ./build.sh $PROJECT_ID
-
-# 3. Deploy frontend to Vercel
-cd ../frontend
-vercel --prod
-```
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
-
-## Project Structure
-
-```
-.
-├── scraper/              # Rust coffee scraper service
-│   ├── src/main.rs      # Scraper with Shopify support
-│   ├── Dockerfile       # Container config
-│   └── build.sh         # Build script
-├── builder/              # Rust build service
-│   ├── src/main.rs      # Firestore → JSON → GitHub
-│   ├── Dockerfile       # Container config
-│   └── build.sh         # Build script
-├── frontend/             # Next.js static site
-│   ├── app/             # Next.js app router
-│   ├── components/      # React components (Map, Filters)
-│   ├── public/data/     # Generated JSON files
-│   └── vercel.json      # Vercel config
-├── terraform/            # Infrastructure as code
-│   ├── main.tf          # GCP resources
-│   ├── variables.tf     # Configuration
-│   └── outputs.tf       # Deployment info
-├── DEPLOYMENT.md         # Full deployment guide
-├── SCRAPER_INFO.md       # Scraper documentation
-└── README.md             # This file
-```
-
-## Data Flow
-
-```
-1. Daily 6 AM UK:  Scraper scrapes UK roasters → saves to Firestore
-2. Daily 7 AM UK:  Builder exports Firestore → JSON files
-3. Automatic:      Builder commits JSON to GitHub
-4. Automatic:      GitHub push triggers Vercel deployment
-5. ~2 min later:   Fresh data live on site!
-```
-
-## Development
-
-### Local Scraper
+### Run Scraper Locally
 
 ```bash
 cd scraper
-cargo run
+cargo run --bin test_scrapers
+# Results saved to scraped_coffees.json
 ```
 
-### Local Builder
-
-```bash
-cd builder
-export GCP_PROJECT_ID="your-project"
-export GITHUB_TOKEN="your-token"
-export REPO_URL="github.com/user/repo"
-cargo run
-```
-
-### Local Frontend
+### Run Frontend Locally
 
 ```bash
 cd frontend
@@ -126,34 +79,45 @@ npm run dev
 # Visit http://localhost:3000
 ```
 
-### Google Analytics (Optional)
+### Full Pipeline
 
-To enable Google Analytics tracking:
+The full pipeline runs via GitHub Actions. See [CI_CD_SETUP.md](CI_CD_SETUP.md) for details.
 
-1. Create a Google Analytics 4 property at https://analytics.google.com
-2. Get your Measurement ID (format: `G-XXXXXXXXXX`)
-3. Create a `.env.local` file in the `frontend/` directory:
-   ```bash
-   NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-   ```
-4. For Vercel deployment, add the environment variable in your Vercel project settings
+## Project Structure
 
-The site will work without Google Analytics - it's completely optional.
+```
+.
+├── scraper/              # Rust coffee scraper
+│   ├── src/main.rs       # Main scraper with 14 roaster functions
+│   └── src/bin/          # Test binaries
+├── builder/              # Rust build service
+│   └── src/main.rs       # Firestore → JSON → Git commit
+├── frontend/             # Next.js static site
+│   ├── app/              # Next.js app router
+│   ├── components/       # React components
+│   └── public/data/      # Generated JSON files
+├── .github/workflows/    # GitHub Actions pipeline
+├── terraform/            # GCP infrastructure (Firestore)
+└── common/               # Shared Rust types
+```
 
 ## Documentation
 
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
+- [CI_CD_SETUP.md](CI_CD_SETUP.md) - Pipeline and deployment setup
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment guide
 - [SCRAPER_INFO.md](SCRAPER_INFO.md) - Scraper implementation details
-- [SETUP.md](SETUP.md) - Original setup notes
+- [SCRAPER_ISSUES.md](SCRAPER_ISSUES.md) - Known issues and removed scrapers
+- [TEST_GUIDE.md](TEST_GUIDE.md) - Testing guide
 
 ## Contributing
 
-Contributions welcome! To add new roasters:
+To add new roasters:
 
 1. Add scraper function in `scraper/src/main.rs`
-2. Most UK roasters use Shopify - use `scrape_shopify_store()` helper
-3. Update `SCRAPER_INFO.md` with new roaster details
-4. Test locally with `cargo run`
+2. Most UK roasters use Shopify - use `scrape_shopify_json()` with HTML fallback
+3. Add to the scraper results vector in `run_scraper()`
+4. Test with `cargo run --bin test_scrapers`
+5. Update roaster list in `frontend/components/ReadmeTab.tsx`
 
 ## License
 

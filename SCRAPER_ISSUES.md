@@ -2,7 +2,7 @@
 
 ## Scraping Strategy
 
-All scrapers now use a **dual-approach** for maximum reliability:
+All scrapers use a **dual-approach** for maximum reliability:
 
 1. **Primary**: Shopify JSON API (`/collections/{collection}/products.json`)
    - More reliable than HTML scraping
@@ -14,21 +14,28 @@ All scrapers now use a **dual-approach** for maximum reliability:
    - Supports various Shopify themes and custom sites
    - Extensive title/name detection patterns
 
-## Current Status: 9/9 Scrapers Active ✅
+3. **Custom**: For non-Shopify platforms (WooCommerce, etc.)
 
-All active scrapers are working properly. The system focuses on reliable UK specialty coffee roasters.
+## Current Status: 14/14 Scrapers Active
 
-### ✅ Active Scrapers
+### Active Scrapers
 
-1. **Origin Coffee** - JSON API + HTML fallback
-2. **Rave Coffee** - JSON API + HTML fallback
-3. **Has Bean** - JSON API + HTML fallback
-4. **Dark Arts** - JSON API + HTML fallback
-5. **Round Hill** - JSON API + HTML fallback
-6. **Volcano Coffee Works** - JSON API + HTML fallback
-7. **Balance Coffee** - JSON API + HTML fallback
-8. **Union Coffee Roasters** - JSON API + HTML fallback
-9. **Hermanos Coffee** - JSON API + HTML fallback (Colombian specialty)
+| # | Roaster | Strategy | Notes |
+|---|---------|----------|-------|
+| 1 | Origin Coffee | JSON + HTML | Shopify |
+| 2 | Rave Coffee | JSON + HTML | Shopify |
+| 3 | Ozone Coffee | JSON + HTML | Shopify (renamed from Has Bean) |
+| 4 | Dark Arts Coffee | JSON + HTML | Shopify |
+| 5 | Round Hill Roastery | JSON + HTML | Shopify |
+| 6 | Volcano Coffee Works | JSON + HTML | Shopify |
+| 7 | Balance Coffee | JSON + HTML | Shopify |
+| 8 | Union Coffee Roasters | JSON + HTML | Shopify |
+| 9 | Hermanos Coffee | HTML only | Shopify (Colombian specialty) |
+| 10 | Monmouth Coffee | Custom | WooCommerce - fetches product pages |
+| 11 | Gotham Coffee | HTML only | Shopify |
+| 12 | Coffee Compass | HTML only | Shopify |
+| 13 | UE Coffee Roasters | JSON + HTML | Shopify |
+| 14 | Kiss the Hippo | JSON + HTML | Shopify |
 
 ### Removed Scrapers
 
@@ -48,19 +55,19 @@ The following scrapers were removed due to persistent issues:
 - Would require API endpoint discovery or headless browser
 
 **Redber Coffee** - HTTP 404 errors
-- Attempted multiple URL variations (.co.uk, collections/coffee, collections/all, collections/beans)
+- Attempted multiple URL variations
 - All endpoints returned 404
 
 **Extract Coffee Roasters** - HTTP 404 errors
 - Shopify store structure but collections endpoint not accessible
 
-## Architecture Improvements
+## Architecture
 
 ### Generic Functions
 
 1. **`scrape_shopify_json()`** - Handles Shopify JSON API
    - Parses products array
-   - Extracts: title, price, handle, availability
+   - Extracts: title, price, handle, availability, tasting notes from tags
    - Auto-detects origin/region from product name
 
 2. **`scrape_shopify_store()`** - HTML fallback
@@ -70,30 +77,28 @@ The following scrapers were removed due to persistent issues:
    - Price and URL extraction
 
 3. **`extract_origin_from_name()`** - Origin detection
-   - 18 coffee-producing countries
+   - 25+ coffee-producing countries
    - Case-insensitive matching
    - Extracts both origin and region
 
-## Resolved Issues ✅
+### Custom Scrapers
 
-- ~~Rave Coffee - 0 products~~ → **Fixed**: JSON API + HTML fallback working
-- ~~Has Bean - 0 products~~ → **Fixed**: JSON API working
-- ~~Round Hill - 0 products~~ → **Fixed**: JSON API working
-- ~~Origin Coffee selectors~~ → **Optimized**: JSON API primary
-- ~~Dark Arts selectors~~ → **Optimized**: JSON API primary
-- ~~Assembly - HTTP 404~~ → **Removed**: Persistent connection issues
-- ~~Square Mile - HTTP 403~~ → **Removed**: Bot protection too aggressive
-- ~~Pact Coffee - 0 products~~ → **Removed**: Non-Shopify architecture
+**Monmouth Coffee (WooCommerce)**
+- `scrape_monmouth()` + `scrape_monmouth_product()`
+- Fetches individual product pages for detailed info
+- Extracts country/origin from page text
+- Parses tasting notes from descriptions
+- Normalizes prices to per 250g
 
-## System Status
-
-**9/9 scrapers operational** - All active scrapers use the dual-approach strategy (JSON API + HTML fallback) with verified URLs. Expanded from original 5 roasters by adding Volcano Coffee Works, Balance Coffee, Union Coffee Roasters, and Hermanos Colombian Coffee with correct collection URLs discovered via web search.
-
-## Testing After Updates
+## Testing
 
 ```bash
 cd scraper
 cargo run --bin test_scrapers
+# Results saved to scraped_coffees.json
 ```
 
-This will show which scrapers are currently working and which need attention.
+## Known Issues
+
+- **Monmouth**: May return limited results if site blocks requests
+- **Hermanos/Gotham/Coffee Compass**: No JSON API, rely on HTML selectors
