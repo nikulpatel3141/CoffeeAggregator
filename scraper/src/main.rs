@@ -1098,9 +1098,271 @@ async fn scrape_hermanos() -> Result<Vec<Coffee>> {
 async fn scrape_monmouth() -> Result<Vec<Coffee>> {
     info!("Scraping Monmouth Coffee");
 
-    // WooCommerce store - use WooCommerce scraper
-    let url = "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/";
-    scrape_woocommerce_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    let base_url = "https://www.monmouthcoffee.co.uk";
+    let collection_url = "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/";
+
+    // First get the list of products
+    let response = client
+        .get(collection_url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .send()
+        .await?;
+
+    let body = response.text().await?;
+    let document = Html::parse_document(&body);
+
+    // Extract product URLs from the listing page
+    let mut product_urls = Vec::new();
+    let product_selectors = vec![".product", "li.product", ".type-product"];
+
+    for selector_str in product_selectors {
+        if let Ok(product_selector) = Selector::parse(selector_str) {
+            for product in document.select(&product_selector) {
+                if let Ok(link_selector) = Selector::parse("a") {
+                    if let Some(link) = product.select(&link_selector).next() {
+                        if let Some(href) = link.value().attr("href") {
+                            if href.contains("/product/") && !product_urls.contains(&href.to_string()) {
+                                product_urls.push(href.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if !product_urls.is_empty() {
+            break;
+        }
+    }
+
+    info!("Found {} Monmouth product URLs", product_urls.len());
+
+    let mut coffees = Vec::new();
+
+    // Fetch each product page to get detailed info
+    for product_url in product_urls.iter().take(30) {
+        if let Ok(coffee) = scrape_monmouth_product(&client, product_url, base_url).await {
+            coffees.push(coffee);
+        }
+        // Small delay to be respectful
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    }
+
+    Ok(coffees)
+}
+
+async fn scrape_monmouth_product(client: &reqwest::Client, url: &str, base_url: &str) -> Result<Coffee> {
+    let response = client
+        .get(url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .header("Referer", base_url)
+        .send()
+        .await?;
+
+    let body = response.text().await?;
+    let document = Html::parse_document(&body);
+
+    // Extract product name
+    let name = [
+        "h1.product_title",
+        ".product_title",
+        "h1",
+    ]
+    .iter()
+    .find_map(|sel| {
+        Selector::parse(sel).ok().and_then(|s| {
+            document.select(&s).next().map(|e| {
+                e.text().collect::<String>().trim().to_string()
+            })
+        })
+    })
+    .unwrap_or_default();
+
+    if name.is_empty() {
+        return Err(anyhow::anyhow!("Could not find product name"));
+    }
+
+    // Extract country/origin - look in product description or meta
+    let page_text = document.root_element().text().collect::<String>().to_lowercase();
+    let (origin, region) = extract_origin_from_page_text(&page_text, &name);
+
+    // Extract tasting notes - look for flavor descriptors
+    let tasting_notes = extract_tasting_notes_from_text(&page_text);
+
+    // Extract prices and weights - WooCommerce variations
+    let mut prices_weights: Vec<(f64, f64)> = Vec::new();
+
+    // Look for variation data or price elements
+    if let Ok(price_selector) = Selector::parse(".woocommerce-Price-amount, .price .amount, .price bdi") {
+        for price_el in document.select(&price_selector) {
+            let price_text = price_el.text().collect::<String>();
+            if let Some(price) = parse_price(&price_text) {
+                // Try to find associated weight
+                let weight = extract_weight_from_context(&page_text, price);
+                prices_weights.push((price, weight.unwrap_or(250.0)));
+            }
+        }
+    }
+
+    // Calculate price per 250g
+    let price = if !prices_weights.is_empty() {
+        // Find the best price per 250g
+        let mut best_price_per_250g = f64::MAX;
+        for (price, weight) in &prices_weights {
+            let price_per_250g = (price / weight) * 250.0;
+            if price_per_250g < best_price_per_250g {
+                best_price_per_250g = price_per_250g;
+            }
+        }
+        if best_price_per_250g < f64::MAX {
+            Some(format!("£{:.2}", best_price_per_250g))
+        } else {
+            None
+        }
+    } else {
+        // Fallback to simple price extraction
+        if let Ok(price_selector) = Selector::parse(".price, .woocommerce-Price-amount") {
+            document.select(&price_selector).next().map(|e| {
+                e.text().collect::<String>().trim().to_string()
+            })
+        } else {
+            None
+        }
+    };
+
+    Ok(Coffee {
+        name,
+        roaster: "Monmouth Coffee".to_string(),
+        origin,
+        region,
+        tasting_notes,
+        price,
+        weight: Some("250g".to_string()),
+        url: url.to_string(),
+        in_stock: true,
+        scraped_at: Utc::now().to_rfc3339(),
+    })
+}
+
+fn extract_origin_from_page_text(text: &str, name: &str) -> (Option<String>, Option<String>) {
+    // First try the name
+    let (origin, region) = extract_origin_from_name(name);
+    if origin.is_some() {
+        return (origin, region);
+    }
+
+    // Common coffee-producing countries
+    let countries = [
+        ("ethiopia", "Ethiopia"),
+        ("kenya", "Kenya"),
+        ("colombia", "Colombia"),
+        ("brazil", "Brazil"),
+        ("guatemala", "Guatemala"),
+        ("costa rica", "Costa Rica"),
+        ("honduras", "Honduras"),
+        ("peru", "Peru"),
+        ("rwanda", "Rwanda"),
+        ("burundi", "Burundi"),
+        ("indonesia", "Indonesia"),
+        ("sumatra", "Indonesia"),
+        ("java", "Indonesia"),
+        ("panama", "Panama"),
+        ("el salvador", "El Salvador"),
+        ("nicaragua", "Nicaragua"),
+        ("mexico", "Mexico"),
+        ("uganda", "Uganda"),
+        ("tanzania", "Tanzania"),
+        ("malawi", "Malawi"),
+        ("zambia", "Zambia"),
+        ("congo", "DR Congo"),
+        ("yemen", "Yemen"),
+        ("india", "India"),
+        ("papua new guinea", "Papua New Guinea"),
+        ("bolivian", "Bolivia"),
+        ("bolivia", "Bolivia"),
+        ("ecuadorian", "Ecuador"),
+        ("ecuador", "Ecuador"),
+    ];
+
+    for (pattern, country) in countries {
+        if text.contains(pattern) {
+            return (Some(country.to_string()), None);
+        }
+    }
+
+    (None, None)
+}
+
+fn extract_tasting_notes_from_text(text: &str) -> Vec<String> {
+    let mut notes = Vec::new();
+
+    // Common tasting note descriptors
+    let descriptors = [
+        "chocolate", "cocoa", "caramel", "honey", "citrus", "lemon", "orange",
+        "berry", "blueberry", "strawberry", "raspberry", "blackberry", "cherry",
+        "apple", "pear", "peach", "apricot", "plum", "grape", "tropical",
+        "mango", "pineapple", "passion fruit", "passionfruit", "floral", "jasmine",
+        "rose", "bergamot", "tea", "nutty", "almond", "hazelnut", "walnut",
+        "vanilla", "brown sugar", "molasses", "toffee", "butterscotch",
+        "wine", "winey", "bright", "crisp", "clean", "smooth", "silky",
+        "creamy", "buttery", "spicy", "cinnamon", "clove", "ginger",
+        "earthy", "woody", "cedar", "tobacco", "leather", "sweet",
+        "fruity", "juicy", "balanced", "complex", "rich", "full-bodied",
+    ];
+
+    for descriptor in descriptors {
+        if text.contains(descriptor) && !notes.contains(&capitalize_first(descriptor)) {
+            notes.push(capitalize_first(descriptor));
+        }
+    }
+
+    // Limit to most relevant notes
+    notes.truncate(5);
+    notes
+}
+
+fn capitalize_first(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+    }
+}
+
+fn parse_price(price_text: &str) -> Option<f64> {
+    // Extract numeric value from price string like "£12.50" or "12.50"
+    let cleaned: String = price_text
+        .chars()
+        .filter(|c| c.is_numeric() || *c == '.')
+        .collect();
+    cleaned.parse().ok()
+}
+
+fn extract_weight_from_context(text: &str, _price: f64) -> Option<f64> {
+    // Look for common weight patterns
+    let weight_patterns = [
+        (r"1\s*kg", 1000.0),
+        (r"1000\s*g", 1000.0),
+        (r"500\s*g", 500.0),
+        (r"250\s*g", 250.0),
+        (r"227\s*g", 227.0),
+        (r"200\s*g", 200.0),
+        (r"125\s*g", 125.0),
+    ];
+
+    for (pattern, weight) in weight_patterns {
+        if text.contains(&pattern.replace(r"\s*", "")) || text.contains(&pattern.replace(r"\s*", " ")) {
+            return Some(weight);
+        }
+    }
+
+    None
 }
 
 async fn scrape_gotham() -> Result<Vec<Coffee>> {
