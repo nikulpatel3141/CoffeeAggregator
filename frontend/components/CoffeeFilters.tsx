@@ -20,6 +20,77 @@ export interface CoffeeFilterValues {
   tastingNotes: string
 }
 
+// Map tasting notes to emojis
+const getTastingNoteEmoji = (note: string): string => {
+  const emojiMap: { [key: string]: string } = {
+    'chocolate': '🍫',
+    'cocoa': '🍫',
+    'caramel': '🍮',
+    'honey': '🍯',
+    'citrus': '🍊',
+    'lemon': '🍋',
+    'orange': '🍊',
+    'berry': '🫐',
+    'blueberry': '🫐',
+    'strawberry': '🍓',
+    'raspberry': '🫐',
+    'blackberry': '🫐',
+    'cherry': '🍒',
+    'apple': '🍎',
+    'pear': '🍐',
+    'peach': '🍑',
+    'apricot': '🍑',
+    'plum': '🫐',
+    'grape': '🍇',
+    'tropical': '🏝️',
+    'mango': '🥭',
+    'pineapple': '🍍',
+    'passion fruit': '🏝️',
+    'floral': '🌸',
+    'jasmine': '🌸',
+    'rose': '🌹',
+    'bergamot': '🍊',
+    'tea': '🍵',
+    'nutty': '🥜',
+    'almond': '🥜',
+    'hazelnut': '🌰',
+    'walnut': '🥜',
+    'vanilla': '🍦',
+    'brown sugar': '🍬',
+    'molasses': '🍯',
+    'toffee': '🍬',
+    'butterscotch': '🍬',
+    'wine': '🍷',
+    'winey': '🍷',
+    'bright': '✨',
+    'crisp': '✨',
+    'clean': '💎',
+    'smooth': '🧈',
+    'silky': '🧈',
+    'creamy': '🧈',
+    'buttery': '🧈',
+    'spicy': '🌶️',
+    'cinnamon': '🌰',
+    'clove': '🌶️',
+    'ginger': '🫚',
+    'earthy': '🌍',
+    'woody': '🪵',
+    'cedar': '🪵',
+    'tobacco': '🍂',
+    'leather': '🍂',
+    'sweet': '🍭',
+    'fruity': '🍇',
+    'juicy': '🧃',
+    'balanced': '⚖️',
+    'complex': '🎭',
+    'rich': '💰',
+    'full-bodied': '💪',
+  }
+
+  const normalizedNote = note.toLowerCase()
+  return emojiMap[normalizedNote] || '☕'
+}
+
 // Map country names to flag emojis
 const getCountryFlag = (country: string): string => {
   const flagMap: { [key: string]: string } = {
@@ -366,13 +437,14 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
                 <button
                   key={note}
                   onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note, true)}
-                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-md transition-colors capitalize ${
+                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-md transition-colors capitalize inline-flex items-center gap-0.5 sm:gap-1 ${
                     filters.tastingNotes === note
                       ? 'bg-amber-600 text-white shadow-sm'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
-                  {note}
+                  <span className="text-xs sm:text-sm">{getTastingNoteEmoji(note)}</span>
+                  <span>{note}</span>
                 </button>
               ))}
             </div>

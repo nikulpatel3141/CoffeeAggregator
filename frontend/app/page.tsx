@@ -110,6 +110,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(50)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showMapOnMobile, setShowMapOnMobile] = useState(false)
 
   useEffect(() => {
     fetchCoffees()
@@ -458,7 +459,7 @@ export default function Home() {
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 }`}
               >
-                Subs
+                Subscriptions
               </button>
               <button
                 onClick={() => setActiveTab('readme')}
@@ -491,7 +492,17 @@ export default function Home() {
 
               {/* Right: Map */}
               <div className="lg:sticky lg:top-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px]">
+                {/* Mobile Map Toggle */}
+                <button
+                  onClick={() => setShowMapOnMobile(!showMapOnMobile)}
+                  className="lg:hidden w-full mb-2 px-4 py-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                >
+                  <span>{showMapOnMobile ? '🗺️ Hide Map' : '🗺️ Show Map'}</span>
+                  <svg className={`w-4 h-4 transition-transform ${showMapOnMobile ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px] ${showMapOnMobile ? 'block' : 'hidden lg:block'}`}>
                   <CoffeeMap coffees={filteredCoffees} />
                 </div>
               </div>
