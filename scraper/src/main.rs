@@ -870,6 +870,126 @@ async fn scrape_shopify_store(
     Ok(coffees)
 }
 
+async fn scrape_woocommerce_store(
+    collection_url: &str,
+    roaster_name: &str,
+    base_url: &str,
+) -> Result<Vec<Coffee>> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    let response = client
+        .get(collection_url)
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header("Accept-Language", "en-GB,en;q=0.9")
+        .header("Referer", base_url)
+        .send()
+        .await?;
+
+    let body = response.text().await?;
+    let document = Html::parse_document(&body);
+
+    // WooCommerce-specific selectors
+    let product_selectors = vec![
+        ".product",
+        ".type-product",
+        "li.product",
+        ".products > li",
+        ".woocommerce-loop-product",
+        "[class*='product-type']",
+    ];
+
+    let mut coffees = Vec::new();
+
+    for selector_str in product_selectors {
+        if let Ok(product_selector) = Selector::parse(selector_str) {
+            for product in document.select(&product_selector) {
+                let name = [
+                    ".woocommerce-loop-product__title",
+                    "h2.woocommerce-loop-product__title",
+                    ".product-title",
+                    ".woocommerce-LoopProduct-title",
+                    "h2",
+                    "h3",
+                    ".title",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
+                        })
+                    })
+                })
+                .unwrap_or_default();
+
+                if name.is_empty() || coffees.iter().any(|c: &Coffee| c.name == name) {
+                    continue;
+                }
+
+                let price = [
+                    ".woocommerce-Price-amount",
+                    ".price",
+                    "span.price",
+                    ".amount",
+                    "bdi",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().map(|e| {
+                            e.text().collect::<String>().trim().to_string()
+                        })
+                    })
+                });
+
+                let product_url = [
+                    "a.woocommerce-LoopProduct-link",
+                    "a.woocommerce-loop-product__link",
+                    "a",
+                ]
+                .iter()
+                .find_map(|sel| {
+                    Selector::parse(sel).ok().and_then(|s| {
+                        product.select(&s).next().and_then(|e| e.value().attr("href"))
+                    })
+                })
+                .map(|href| {
+                    if href.starts_with("http") {
+                        href.to_string()
+                    } else {
+                        format!("{}{}", base_url, href)
+                    }
+                })
+                .unwrap_or_else(|| collection_url.to_string());
+
+                let (origin, region) = extract_origin_from_name(&name);
+
+                coffees.push(Coffee {
+                    name,
+                    roaster: roaster_name.to_string(),
+                    origin,
+                    region,
+                    tasting_notes: Vec::new(),
+                    price,
+                    weight: None,
+                    url: product_url,
+                    in_stock: true,
+                    scraped_at: Utc::now().to_rfc3339(),
+                });
+            }
+
+            if !coffees.is_empty() {
+                break;
+            }
+        }
+    }
+
+    Ok(coffees)
+}
+
 async fn scrape_rave_coffee() -> Result<Vec<Coffee>> {
     info!("Scraping Rave Coffee");
 
@@ -978,9 +1098,9 @@ async fn scrape_hermanos() -> Result<Vec<Coffee>> {
 async fn scrape_monmouth() -> Result<Vec<Coffee>> {
     info!("Scraping Monmouth Coffee");
 
-    // WooCommerce store - use generic scraper
+    // WooCommerce store - use WooCommerce scraper
     let url = "https://www.monmouthcoffee.co.uk/product-category/our-coffee/beans/";
-    scrape_shopify_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
+    scrape_woocommerce_store(url, "Monmouth Coffee", "https://www.monmouthcoffee.co.uk").await
 }
 
 async fn scrape_gotham() -> Result<Vec<Coffee>> {
