@@ -73,10 +73,10 @@ export default function SubscriptionsTab() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-amber-900 dark:text-amber-400 mb-3">
+        <h2 className="text-3xl font-bold text-coffee-strong mb-3">
           UK Specialty Coffee Subscriptions
         </h2>
-        <p className="text-gray-700 dark:text-gray-300 text-lg">
+        <p className="text-text text-lg">
           Compare subscription plans from top UK roasters. All prices shown are for 250g bags delivered every 2 weeks.
         </p>
       </div>
@@ -85,25 +85,25 @@ export default function SubscriptionsTab() {
         {subscriptions.map((sub, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-transparent dark:border-gray-700 hover:shadow-xl transition-shadow"
+            className="bg-surface rounded-surface shadow-raised p-4 border border-border hover:shadow-floating transition-surface duration-calm ease-gentle"
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-amber-900 dark:text-amber-400">
+                <h3 className="text-lg font-bold text-coffee-strong">
                   {sub.roaster}
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400">{sub.notes}</p>
+                <p className="text-xs text-muted">{sub.notes}</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">250g every 2 weeks</p>
-                  <p className="text-xl font-bold text-amber-900 dark:text-amber-400">{sub.price}</p>
+                  <p className="text-xs text-muted">250g every 2 weeks</p>
+                  <p className="text-xl font-bold text-coffee-strong">{sub.price}</p>
                 </div>
                 <a
                   href={sub.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-amber-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors font-medium whitespace-nowrap"
+                  className="inline-block bg-coffee text-white text-sm px-4 py-2 rounded-surface hover:bg-coffee-strong transition-surface duration-calm ease-gentle font-medium whitespace-nowrap"
                 >
                   View Subscription
                 </a>
@@ -113,11 +113,11 @@ export default function SubscriptionsTab() {
         ))}
       </div>
 
-      <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-2">
+      <div className="mt-8 bg-sage/10 border border-sage/30 rounded-surface p-6">
+        <h3 className="text-lg font-bold text-sage mb-2">
           💡 Subscription Tips
         </h3>
-        <ul className="text-blue-800 dark:text-blue-300 space-y-2 text-sm">
+        <ul className="text-text space-y-2 text-sm">
           <li>• Most subscriptions offer flexibility to pause or cancel anytime</li>
           <li>• Many roasters provide free delivery for subscriptions</li>
           <li>• Consider trying different roasters to discover your favorite</li>

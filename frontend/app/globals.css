@@ -3,12 +3,41 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-canvas: 249 245 238;
+  --color-surface: 255 252 247;
+  --color-surface-elevated: 255 255 252;
+  --color-text: 49 38 31;
+  --color-text-muted: 111 91 78;
+  --color-border: 222 208 193;
+  --color-coffee: 111 65 42;
+  --color-coffee-strong: 83 45 29;
+  --color-crema: 238 201 145;
+  --color-terracotta: 180 83 60;
+  --color-sage: 105 128 100;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.dark {
+  --color-canvas: 29 24 21;
+  --color-surface: 39 32 28;
+  --color-surface-elevated: 49 40 34;
+  --color-text: 244 235 224;
+  --color-text-muted: 193 174 158;
+  --color-border: 80 65 55;
+  --color-coffee: 224 166 114;
+  --color-coffee-strong: 244 196 145;
+  --color-crema: 216 172 111;
+  --color-terracotta: 218 127 102;
+  --color-sage: 151 174 143;
+}
+
+@layer base {
+  body {
+    @apply bg-canvas text-text antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
 }

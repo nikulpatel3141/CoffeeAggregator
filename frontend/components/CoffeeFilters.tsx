@@ -222,12 +222,12 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 mb-4 md:mb-6 border border-transparent dark:border-gray-700">
+    <div className="bg-surface rounded-surface shadow-raised p-4 sm:p-6 mb-4 md:mb-6 border border-border">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-bold text-amber-900 dark:text-amber-400">Filter Coffees</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-coffee-strong">Filter Coffees</h2>
         <button
           onClick={clearFilters}
-          className="text-xs sm:text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline whitespace-nowrap"
+          className="text-xs sm:text-sm text-coffee hover:text-coffee-strong underline whitespace-nowrap"
         >
           Clear all
         </button>
@@ -236,7 +236,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Search */}
         <div>
-          <label htmlFor="search" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="search" className="block text-xs sm:text-sm font-medium text-text mb-1">
             Search
           </label>
           <input
@@ -245,20 +245,20 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
             placeholder="Coffee name..."
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 text-sm border border-border bg-elevated text-text rounded-control focus:ring-2 focus:ring-crema focus:border-transparent"
           />
         </div>
 
         {/* Roaster */}
         <div>
-          <label htmlFor="roaster" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="roaster" className="block text-xs sm:text-sm font-medium text-text mb-1">
             Roaster
           </label>
           <select
             id="roaster"
             value={filters.roaster}
             onChange={(e) => updateFilter('roaster', e.target.value)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 text-sm border border-border bg-elevated text-text rounded-control focus:ring-2 focus:ring-crema focus:border-transparent"
           >
             <option value="">All roasters</option>
             {roasters.map((roaster) => (
@@ -271,17 +271,17 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
 
         {/* Price Range */}
         <div className="sm:col-span-2 lg:col-span-1">
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs sm:text-sm font-medium text-text mb-1">
             Price Range: £{filters.minPrice} - £{filters.maxPrice}
           </label>
           <div className="px-1 pt-4 sm:pt-6 pb-2">
             <div className="relative h-2">
               {/* Track background */}
-              <div className="absolute w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
+              <div className="absolute w-full h-2 bg-border rounded-surface"></div>
 
               {/* Active range highlight */}
               <div
-                className="absolute h-2 bg-amber-600 rounded-lg"
+                className="absolute h-2 bg-coffee rounded-surface"
                 style={{
                   left: `${((filters.minPrice - minPrice) / (maxPrice - minPrice)) * 100}%`,
                   right: `${100 - ((filters.maxPrice - minPrice) / (maxPrice - minPrice)) * 100}%`
@@ -341,7 +341,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
               width: 16px;
               height: 16px;
               border-radius: 50%;
-              background: #d97706;
+              background: rgb(var(--color-coffee));
               cursor: pointer;
             }
 
@@ -349,7 +349,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
               width: 16px;
               height: 16px;
               border-radius: 50%;
-              background: #d97706;
+              background: rgb(var(--color-coffee));
               border: none;
               cursor: pointer;
             }
@@ -366,7 +366,7 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
 
         {/* Tasting Notes with Autocomplete */}
         <div className="sm:col-span-2 relative">
-          <label htmlFor="tastingNotes" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="tastingNotes" className="block text-xs sm:text-sm font-medium text-text mb-1">
             Tasting Notes
           </label>
           <input
@@ -378,19 +378,19 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
             onKeyDown={handleTastingNotesKeyDown}
             onFocus={() => filters.tastingNotes && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-2 text-sm border border-border bg-elevated text-text rounded-control focus:ring-2 focus:ring-crema focus:border-transparent"
           />
           {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-1 bg-elevated border border-border rounded-control shadow-raised max-h-48 overflow-y-auto">
               {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => selectSuggestion(suggestion)}
-                  className={`w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 capitalize ${
+                  className={`w-full text-left px-3 py-2 text-text capitalize ${
                     index === selectedSuggestionIndex
-                      ? 'bg-amber-100 dark:bg-gray-600'
-                      : 'hover:bg-amber-50 dark:hover:bg-gray-600'
+                      ? 'bg-crema/25'
+                      : 'hover:bg-crema/20'
                   }`}
                 >
                   {suggestion}
@@ -402,24 +402,24 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
       </div>
 
       {/* Tags Section */}
-      <div className="mt-3 sm:mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
-        <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+      <div className="mt-3 sm:mt-4 border-t border-border pt-3">
+        <h3 className="text-xs font-medium text-muted uppercase tracking-wide mb-2">
           🏷️ Quick Filters
         </h3>
 
         <div className="space-y-2 sm:space-y-3">
           {/* Origin Tags */}
           <div>
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Origin</p>
+            <p className="text-xs font-medium text-muted mb-1.5">Origin</p>
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {regions.map((region) => (
                 <button
                   key={region}
                   onClick={() => updateFilter('region', filters.region === region ? '' : region)}
-                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-md transition-colors inline-flex items-center gap-0.5 sm:gap-1 ${
+                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-control transition-surface duration-calm ease-gentle inline-flex items-center gap-0.5 sm:gap-1 ${
                     filters.region === region
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-coffee text-white shadow-subtle'
+                      : 'bg-elevated text-text hover:bg-canvas'
                   }`}
                 >
                   <span className="text-xs sm:text-sm">{getCountryFlag(region)}</span>
@@ -431,16 +431,16 @@ export default function CoffeeFilters({ onFilterChange, roasters, regions, minPr
 
           {/* Popular Tasting Notes Tags */}
           <div>
-            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Popular Notes</p>
+            <p className="text-xs font-medium text-muted mb-1.5">Popular Notes</p>
             <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {tastingNotes.slice(0, 20).map((note) => (
                 <button
                   key={note}
                   onClick={() => updateFilter('tastingNotes', filters.tastingNotes === note ? '' : note, true)}
-                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-md transition-colors capitalize inline-flex items-center gap-0.5 sm:gap-1 ${
+                  className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-control transition-surface duration-calm ease-gentle capitalize inline-flex items-center gap-0.5 sm:gap-1 ${
                     filters.tastingNotes === note
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-coffee text-white shadow-subtle'
+                      : 'bg-elevated text-text hover:bg-canvas'
                   }`}
                 >
                   <span className="text-xs sm:text-sm">{getTastingNoteEmoji(note)}</span>
