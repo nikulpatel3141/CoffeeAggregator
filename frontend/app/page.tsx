@@ -268,7 +268,7 @@ export default function Home() {
   const totalPages = itemsPerPage === -1 ? 1 : Math.ceil(filteredCoffees.length / itemsPerPage)
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+    <main className="min-h-screen bg-canvas transition-surface duration-calm ease-gentle">
       <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6">
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
@@ -279,16 +279,16 @@ export default function Home() {
         )}
 
         {/* Mobile Slide-out Menu */}
-        <div className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`fixed top-0 right-0 h-full w-64 bg-surface shadow-floating z-50 transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="p-4">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-400">Menu</h2>
+              <h2 className="text-lg font-semibold text-coffee-strong">Menu</h2>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 rounded-surface hover:bg-elevated"
                 aria-label="Close menu"
               >
-                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -298,30 +298,30 @@ export default function Home() {
             <nav className="space-y-2 mb-6">
               <button
                 onClick={() => { setActiveTab('coffees'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full text-left px-4 py-3 rounded-surface font-medium transition-surface duration-calm ease-gentle ${
                   activeTab === 'coffees'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-text hover:bg-elevated'
                 }`}
               >
                 Coffee List
               </button>
               <button
                 onClick={() => { setActiveTab('subscriptions'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full text-left px-4 py-3 rounded-surface font-medium transition-surface duration-calm ease-gentle ${
                   activeTab === 'subscriptions'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-text hover:bg-elevated'
                 }`}
               >
                 Subscriptions
               </button>
               <button
                 onClick={() => { setActiveTab('readme'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full text-left px-4 py-3 rounded-surface font-medium transition-surface duration-calm ease-gentle ${
                   activeTab === 'readme'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-text hover:bg-elevated'
                 }`}
               >
                 About
@@ -329,21 +329,21 @@ export default function Home() {
             </nav>
 
             {/* Dark Mode Toggle in Mobile Menu */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="border-t border-border pt-4">
               <button
                 onClick={toggleDarkMode}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-surface text-text hover:bg-elevated transition-surface duration-calm ease-gentle"
               >
                 {isDarkMode ? (
                   <>
-                    <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-crema" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                     </svg>
                     <span>Light Mode</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-text" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                     </svg>
                     <span>Dark Mode</span>
@@ -359,7 +359,7 @@ export default function Home() {
           <div className="flex flex-col gap-4 mb-4">
             <div className="flex justify-between items-center gap-2">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-amber-900 dark:text-amber-400 mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-coffee-strong mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 flex-shrink-0">
                     <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
                     <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
@@ -371,7 +371,7 @@ export default function Home() {
                   <span className="hidden sm:inline">UK Specialty Coffee Tracker</span>
                   <span className="sm:hidden">UK Coffee Tracker</span>
                 </h1>
-                <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm md:text-lg hidden sm:block">
+                <p className="text-text text-xs sm:text-sm md:text-lg hidden sm:block">
                   Discover specialty coffee from top UK roasters
                 </p>
               </div>
@@ -379,15 +379,15 @@ export default function Home() {
               {/* Desktop: Dark mode toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="hidden md:block p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
+                className="hidden md:block p-2 rounded-surface bg-elevated shadow-raised hover:shadow-raised transition-surface duration-calm ease-gentle flex-shrink-0"
                 aria-label="Toggle dark mode"
               >
                 {isDarkMode ? (
-                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-crema" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-text" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                   </svg>
                 )}
@@ -396,10 +396,10 @@ export default function Home() {
               {/* Mobile: Hamburger menu button */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
+                className="md:hidden p-2 rounded-surface bg-elevated shadow-raised hover:shadow-raised transition-surface duration-calm ease-gentle flex-shrink-0"
                 aria-label="Open menu"
               >
-                <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -409,30 +409,30 @@ export default function Home() {
             <div className="hidden md:flex gap-2">
               <button
                 onClick={() => setActiveTab('coffees')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'coffees'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-muted hover:bg-elevated'
                 }`}
               >
                 Coffee List
               </button>
               <button
                 onClick={() => setActiveTab('subscriptions')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'subscriptions'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-muted hover:bg-elevated'
                 }`}
               >
                 Subscriptions
               </button>
               <button
                 onClick={() => setActiveTab('readme')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'readme'
-                    ? 'bg-amber-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-coffee text-white'
+                    : 'text-muted hover:bg-elevated'
                 }`}
               >
                 About
@@ -443,30 +443,30 @@ export default function Home() {
             <div className="flex md:hidden gap-1 overflow-x-auto pb-1 -mx-1 px-1">
               <button
                 onClick={() => setActiveTab('coffees')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'coffees'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    ? 'bg-coffee text-white'
+                    : 'bg-elevated text-muted'
                 }`}
               >
                 Coffees
               </button>
               <button
                 onClick={() => setActiveTab('subscriptions')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'subscriptions'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    ? 'bg-coffee text-white'
+                    : 'bg-elevated text-muted'
                 }`}
               >
                 Subscriptions
               </button>
               <button
                 onClick={() => setActiveTab('readme')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
                   activeTab === 'readme'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    ? 'bg-coffee text-white'
+                    : 'bg-elevated text-muted'
                 }`}
               >
                 About
@@ -495,14 +495,14 @@ export default function Home() {
                 {/* Mobile Map Toggle */}
                 <button
                   onClick={() => setShowMapOnMobile(!showMapOnMobile)}
-                  className="lg:hidden w-full mb-2 px-4 py-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+                  className="lg:hidden w-full mb-2 px-4 py-2 bg-crema/25 text-coffee-strong rounded-surface font-medium text-sm flex items-center justify-center gap-2"
                 >
                   <span>{showMapOnMobile ? '🗺️ Hide Map' : '🗺️ Show Map'}</span>
                   <svg className={`w-4 h-4 transition-transform ${showMapOnMobile ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md border border-transparent dark:border-gray-700 overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px] ${showMapOnMobile ? 'block' : 'hidden lg:block'}`}>
+                <div className={`bg-surface rounded-surface shadow-raised border border-border overflow-hidden h-[300px] sm:h-[400px] lg:h-[500px] ${showMapOnMobile ? 'block' : 'hidden lg:block'}`}>
                   <CoffeeMap coffees={filteredCoffees} />
                 </div>
               </div>
@@ -510,15 +510,15 @@ export default function Home() {
             {/* Coffee Count, Pagination Controls, and View Toggle */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 gap-3 sm:gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-amber-900 dark:text-amber-400">
+                <h2 className="text-xl sm:text-2xl font-bold text-coffee-strong">
                   All Coffees
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-muted mt-1">
                   {filteredCoffees.length === 0 ? (
-                    <>Showing 0 of <span className="font-semibold text-amber-700 dark:text-amber-400">0</span> filtered ({coffees.length} total)</>
+                    <>Showing 0 of <span className="font-semibold text-coffee">0</span> filtered ({coffees.length} total)</>
                   ) : (
                     <>Showing {itemsPerPage === -1 ? 1 : ((currentPage - 1) * itemsPerPage) + 1}-{itemsPerPage === -1 ? filteredCoffees.length : Math.min(currentPage * itemsPerPage, filteredCoffees.length)} of{' '}
-                    <span className="font-semibold text-amber-700 dark:text-amber-400">{filteredCoffees.length}</span> filtered{' '}
+                    <span className="font-semibold text-coffee">{filteredCoffees.length}</span> filtered{' '}
                     ({coffees.length} total)</>
                   )}
                 </p>
@@ -526,7 +526,7 @@ export default function Home() {
               <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                 {/* Items per page selector */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="itemsPerPage" className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="itemsPerPage" className="text-xs sm:text-sm text-text">
                     Per page:
                   </label>
                   <select
@@ -536,7 +536,7 @@ export default function Home() {
                       setItemsPerPage(Number(e.target.value))
                       setCurrentPage(1)
                     }}
-                    className="p-1.5 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="p-1.5 text-xs sm:text-sm border border-border bg-elevated text-text rounded-control focus:ring-2 focus:ring-crema focus:border-transparent"
                   >
                     <option value={25}>25</option>
                     <option value={50}>50</option>
@@ -551,7 +551,7 @@ export default function Home() {
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-surface duration-calm ease-gentle disabled:opacity-50 disabled:cursor-not-allowed text-text hover:bg-elevated"
                       title="First page"
                     >
                       First
@@ -559,18 +559,18 @@ export default function Home() {
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-surface duration-calm ease-gentle disabled:opacity-50 disabled:cursor-not-allowed text-text hover:bg-elevated"
                       title="Previous page"
                     >
                       Prev
                     </button>
-                    <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm text-text whitespace-nowrap">
                       {currentPage} / {totalPages}
                     </span>
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-surface duration-calm ease-gentle disabled:opacity-50 disabled:cursor-not-allowed text-text hover:bg-elevated"
                       title="Next page"
                     >
                       Next
@@ -578,7 +578,7 @@ export default function Home() {
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="px-1.5 sm:px-2 py-1 text-xs sm:text-sm rounded transition-surface duration-calm ease-gentle disabled:opacity-50 disabled:cursor-not-allowed text-text hover:bg-elevated"
                       title="Last page"
                     >
                       Last
@@ -587,22 +587,22 @@ export default function Home() {
                 )}
 
                 {/* View toggle */}
-                <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                <div className="flex gap-1 bg-surface p-1 rounded-surface">
                   <button
                     onClick={() => setViewMode('card')}
-                    className={'p-1.5 sm:p-2 rounded transition-colors ' + (viewMode === 'card' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
+                    className={'p-1.5 sm:p-2 rounded transition-surface duration-calm ease-gentle ' + (viewMode === 'card' ? 'bg-elevated shadow-subtle' : 'hover:bg-canvas')}
                     aria-label="Card view"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={'p-1.5 sm:p-2 rounded transition-colors ' + (viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-gray-700')}
+                    className={'p-1.5 sm:p-2 rounded transition-surface duration-calm ease-gentle ' + (viewMode === 'list' ? 'bg-elevated shadow-subtle' : 'hover:bg-canvas')}
                     aria-label="List view"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                   </button>
@@ -612,18 +612,18 @@ export default function Home() {
             {/* Loading State */}
             {loading && (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700 dark:border-amber-400 mx-auto"></div>
-                <p className="mt-4 text-gray-700 dark:text-gray-300">Loading coffees...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee mx-auto"></div>
+                <p className="mt-4 text-text">Loading coffees...</p>
               </div>
             )}
 
             {/* Error State */}
             {error && !loading && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-                <p className="text-red-800 dark:text-red-300">{error}</p>
+              <div className="bg-terracotta/10 border border-terracotta/30 rounded-surface p-6 text-center">
+                <p className="text-terracotta">{error}</p>
                 <button
                   onClick={fetchCoffees}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="mt-4 px-4 py-2 bg-terracotta text-white rounded-control hover:bg-terracotta/85 transition-surface duration-calm ease-gentle"
                 >
                   Retry
                 </button>
@@ -634,8 +634,8 @@ export default function Home() {
             {!loading && !error && (
               <div>
                 {filteredCoffees.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-gray-600 dark:text-gray-400">
+                  <div className="text-center py-12 bg-surface rounded-surface">
+                    <p className="text-muted">
                       No coffees found matching your filters. Try adjusting your search criteria.
                     </p>
                   </div>
@@ -645,14 +645,14 @@ export default function Home() {
                     {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4 hover:shadow-xl transition-shadow border border-transparent dark:border-gray-700"
+                        className="bg-surface rounded-surface shadow-raised p-3 sm:p-4 hover:shadow-floating transition-surface duration-calm ease-gentle border border-border"
                       >
-                        <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-400 mb-1">
+                        <h3 className="text-lg font-semibold text-coffee-strong mb-1">
                           {coffee.name}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1 font-medium">{coffee.roaster}</p>
+                        <p className="text-sm text-muted mb-1 font-medium">{coffee.roaster}</p>
                         {(coffee.origin || coffee.region) && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                          <p className="text-xs text-muted mb-2">
                             {coffee.region || coffee.origin}
                             <span className="ml-1">{getCountryFlag(coffee.origin || coffee.region)}</span>
                           </p>
@@ -665,7 +665,7 @@ export default function Home() {
                                 return (
                                   <span
                                     key={i}
-                                    className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
+                                    className="bg-crema/25 text-coffee-strong text-xs px-2 py-0.5 rounded"
                                   >
                                     {emoji && <span className="mr-1">{emoji}</span>}
                                     {note}
@@ -676,8 +676,8 @@ export default function Home() {
                           </div>
                         )}
                         {coffee.price && (
-                          <p className="text-base font-bold text-amber-600 dark:text-amber-400 mb-2">
-                            {coffee.price}{coffee.weight && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/ {coffee.weight}</span>}
+                          <p className="text-base font-bold text-coffee mb-2">
+                            {coffee.price}{coffee.weight && <span className="text-sm font-normal text-muted ml-1">/ {coffee.weight}</span>}
                           </p>
                         )}
                         <div className="flex gap-2 items-center">
@@ -685,12 +685,12 @@ export default function Home() {
                             href={coffee.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-block bg-amber-600 text-white text-sm px-3 py-1.5 rounded hover:bg-amber-700 transition-colors"
+                            className="inline-block bg-coffee text-white text-sm px-3 py-1.5 rounded hover:bg-coffee-strong transition-surface duration-calm ease-gentle"
                           >
                             View Coffee
                           </a>
                           {coffee.in_stock && (
-                            <span className="text-xs text-green-600 dark:text-green-400 font-medium">In Stock</span>
+                            <span className="text-xs text-sage font-medium">In Stock</span>
                           )}
                         </div>
                       </div>
@@ -702,19 +702,19 @@ export default function Home() {
                     {paginatedCoffees.map((coffee, index) => (
                       <div
                         key={index}
-                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow border border-transparent dark:border-gray-700"
+                        className="bg-surface rounded-surface shadow-subtle p-3 sm:p-4 hover:shadow-raised transition-surface duration-calm ease-gentle border border-border"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex-1 min-w-0">
-                                <h3 className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-400 truncate">
+                                <h3 className="text-sm sm:text-base font-semibold text-coffee-strong truncate">
                                   {coffee.name}
                                 </h3>
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">{coffee.roaster}</p>
+                                <p className="text-xs sm:text-sm text-muted font-medium">{coffee.roaster}</p>
                               </div>
                               {(coffee.origin || coffee.region) && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                                <div className="text-xs text-muted flex items-center gap-1 flex-shrink-0">
                                   <span>{getCountryFlag(coffee.origin || coffee.region)}</span>
                                   <span className="hidden sm:inline">{coffee.region || coffee.origin}</span>
                                 </div>
@@ -727,7 +727,7 @@ export default function Home() {
                                   return (
                                     <span
                                       key={i}
-                                      className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs px-2 py-0.5 rounded"
+                                      className="bg-crema/25 text-coffee-strong text-xs px-2 py-0.5 rounded"
                                     >
                                       {emoji && <span className="mr-1">{emoji}</span>}
                                       {note}
@@ -739,9 +739,9 @@ export default function Home() {
                           </div>
                           <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
                             {coffee.price && (
-                              <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
+                              <p className="text-sm sm:text-base font-bold text-coffee">
                                 {coffee.price}
-                                {coffee.weight && <span className="text-xs sm:text-sm font-normal text-gray-500 dark:text-gray-400 ml-1 hidden sm:inline">/ {coffee.weight}</span>}
+                                {coffee.weight && <span className="text-xs sm:text-sm font-normal text-muted ml-1 hidden sm:inline">/ {coffee.weight}</span>}
                               </p>
                             )}
                             <div className="flex items-center gap-2">
@@ -749,12 +749,12 @@ export default function Home() {
                                 href={coffee.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-block bg-amber-600 text-white text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-amber-700 transition-colors whitespace-nowrap"
+                                className="inline-block bg-coffee text-white text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded hover:bg-coffee-strong transition-surface duration-calm ease-gentle whitespace-nowrap"
                               >
                                 View
                               </a>
                               {coffee.in_stock && (
-                                <span className="text-xs text-green-600 dark:text-green-400 font-medium whitespace-nowrap hidden sm:inline">In Stock</span>
+                                <span className="text-xs text-sage font-medium whitespace-nowrap hidden sm:inline">In Stock</span>
                               )}
                             </div>
                           </div>
