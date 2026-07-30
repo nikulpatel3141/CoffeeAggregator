@@ -356,121 +356,112 @@ export default function Home() {
 
         {/* Header */}
         <header className="mb-6 md:mb-8">
-          <div className="flex flex-col gap-4 mb-4">
-            <div className="flex justify-between items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-coffee-strong mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 flex-shrink-0">
-                    <path d="M10 13 L10 21 C10 22, 11 23, 12 23 L20 23 C21 23, 22 22, 22 21 L22 13 Z" fill="currentColor"/>
-                    <path d="M10 13 L10 14 L22 14 L22 13 Z" fill="currentColor" opacity="0.7"/>
-                    <path d="M22 16 C23 16, 24 17, 24 18 C24 19, 23 20, 22 20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                    <path d="M12 11 Q12 9, 13 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                    <path d="M16 10 Q16 8, 17 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                    <path d="M20 11 Q20 9, 21 9" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.6"/>
-                  </svg>
-                  <span className="hidden sm:inline">UK Specialty Coffee Tracker</span>
-                  <span className="sm:hidden">UK Coffee Tracker</span>
-                </h1>
-                <p className="text-text text-xs sm:text-sm md:text-lg hidden sm:block">
-                  Discover specialty coffee from top UK roasters
-                </p>
-              </div>
+          <div className="relative overflow-hidden rounded-surface border border-border bg-gradient-to-br from-crema/30 via-surface to-terracotta/10 shadow-raised">
+            <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 hidden h-64 w-64 rounded-full border-[36px] border-coffee/5 md:block" />
+            <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-32 hidden h-24 w-40 bg-[radial-gradient(ellipse_at_center,rgb(var(--color-coffee)/0.10)_0%,transparent_68%)] md:block" />
 
-              {/* Desktop: Dark mode toggle */}
+            {/* Desktop navigation and theme control */}
+            <div className="relative hidden items-center justify-between border-b border-border/80 bg-surface/65 px-5 py-2.5 backdrop-blur-sm md:flex">
+              <nav className="flex gap-1" aria-label="Primary navigation">
+                {([
+                  ['coffees', 'Coffee List'],
+                  ['subscriptions', 'Subscriptions'],
+                  ['readme', 'About'],
+                ] as const).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 text-sm font-medium rounded-control transition-surface duration-calm ease-gentle whitespace-nowrap ${
+                      activeTab === tab ? 'bg-coffee text-white shadow-subtle' : 'text-muted hover:bg-elevated hover:text-text'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </nav>
               <button
                 onClick={toggleDarkMode}
-                className="hidden md:block p-2 rounded-surface bg-elevated shadow-raised hover:shadow-raised transition-surface duration-calm ease-gentle flex-shrink-0"
-                aria-label="Toggle dark mode"
+                className="flex items-center gap-2 rounded-control border border-border bg-elevated/80 px-3 py-2 text-sm font-medium text-text transition-surface duration-calm ease-gentle hover:bg-surface"
+                aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
               >
                 {isDarkMode ? (
-                  <svg className="w-5 h-5 text-crema" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-crema" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-text" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                   </svg>
                 )}
-              </button>
-
-              {/* Mobile: Hamburger menu button */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-2 rounded-surface bg-elevated shadow-raised hover:shadow-raised transition-surface duration-calm ease-gentle flex-shrink-0"
-                aria-label="Open menu"
-              >
-                <svg className="w-5 h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <span>{isDarkMode ? 'Light' : 'Dark'} mode</span>
               </button>
             </div>
 
-            {/* Desktop Tab Navigation */}
-            <div className="hidden md:flex gap-2">
-              <button
-                onClick={() => setActiveTab('coffees')}
-                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'coffees'
-                    ? 'bg-coffee text-white'
-                    : 'text-muted hover:bg-elevated'
-                }`}
-              >
-                Coffee List
-              </button>
-              <button
-                onClick={() => setActiveTab('subscriptions')}
-                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'subscriptions'
-                    ? 'bg-coffee text-white'
-                    : 'text-muted hover:bg-elevated'
-                }`}
-              >
-                Subscriptions
-              </button>
-              <button
-                onClick={() => setActiveTab('readme')}
-                className={`px-4 py-2 text-sm font-medium rounded-surface transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'readme'
-                    ? 'bg-coffee text-white'
-                    : 'text-muted hover:bg-elevated'
-                }`}
-              >
-                About
-              </button>
-            </div>
+            <div className="relative p-4 sm:p-5 md:px-8 md:py-7">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="mb-1 hidden text-xs font-semibold uppercase tracking-[0.2em] text-terracotta sm:block">The daily edit</p>
+                  <h1 className="font-display text-2xl font-bold leading-tight text-coffee-strong sm:text-3xl md:text-4xl lg:text-5xl">
+                    <span className="hidden sm:inline">UK Specialty Coffee Tracker</span>
+                    <span className="sm:hidden">UK Coffee Tracker</span>
+                  </h1>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text sm:text-base md:text-lg">
+                    Find your next exceptional cup across the UK’s independent roasting scene.
+                  </p>
+                </div>
 
-            {/* Mobile Tab Pills (compact, below title) */}
-            <div className="flex md:hidden gap-1 overflow-x-auto pb-1 -mx-1 px-1">
-              <button
-                onClick={() => setActiveTab('coffees')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'coffees'
-                    ? 'bg-coffee text-white'
-                    : 'bg-elevated text-muted'
-                }`}
-              >
-                Coffees
-              </button>
-              <button
-                onClick={() => setActiveTab('subscriptions')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'subscriptions'
-                    ? 'bg-coffee text-white'
-                    : 'bg-elevated text-muted'
-                }`}
-              >
-                Subscriptions
-              </button>
-              <button
-                onClick={() => setActiveTab('readme')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
-                  activeTab === 'readme'
-                    ? 'bg-coffee text-white'
-                    : 'bg-elevated text-muted'
-                }`}
-              >
-                About
-              </button>
+                {/* Mobile: Hamburger menu button */}
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="md:hidden p-2 rounded-surface bg-elevated shadow-raised hover:shadow-raised transition-surface duration-calm ease-gentle flex-shrink-0"
+                  aria-label="Open menu"
+                >
+                  <svg className="w-5 h-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+
+              <dl className="mt-4 flex divide-x divide-border sm:mt-5">
+                {[
+                  ['Coffees', coffees.length],
+                  ['Roasters', roasters.length],
+                  ['Origins', regions.length],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex min-w-0 flex-col px-3 first:pl-0 sm:px-6 sm:first:pl-0">
+                    <dt className="order-2 text-[10px] font-semibold uppercase tracking-wider text-muted sm:text-xs">{label}</dt>
+                    <dd className="order-1 font-display text-lg font-bold tabular-nums text-coffee-strong sm:text-2xl">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {/* Mobile Tab Pills (compact, below title) */}
+              <div className="mt-4 flex gap-1 overflow-x-auto border-t border-border/70 pt-3 md:hidden">
+                <button
+                  onClick={() => setActiveTab('coffees')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
+                    activeTab === 'coffees' ? 'bg-coffee text-white' : 'bg-elevated text-muted'
+                  }`}
+                >
+                  Coffees
+                </button>
+                <button
+                  onClick={() => setActiveTab('subscriptions')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
+                    activeTab === 'subscriptions' ? 'bg-coffee text-white' : 'bg-elevated text-muted'
+                  }`}
+                >
+                  Subscriptions
+                </button>
+                <button
+                  onClick={() => setActiveTab('readme')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-surface duration-calm ease-gentle whitespace-nowrap ${
+                    activeTab === 'readme' ? 'bg-coffee text-white' : 'bg-elevated text-muted'
+                  }`}
+                >
+                  About
+                </button>
+              </div>
             </div>
           </div>
         </header>
